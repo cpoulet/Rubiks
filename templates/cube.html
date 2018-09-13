@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <script src="{{ url_for('static', filename='lib/gl-matrix-min.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cube.css') }}">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <canvas id ='cube'>Il semblerait que votre navigateur ne supporte pas le canevas HTML5</canvas>
+    <script src="{{ url_for('static', filename='js/cube.js') }}"></script>
+</body>
+</html>

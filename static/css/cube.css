@@ -1,0 +1,12 @@
+#cube {
+    display : block;
+    position: absolute;
+    height: 500px;
+    width: 500px;
+    border: solid;
+    background-color : black;
+}
+
+body {
+    text-align : center;
+}
