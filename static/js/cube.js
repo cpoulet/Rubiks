@@ -74,7 +74,7 @@ function main() {
 
 function initBuffers(gl) {
 
-    const cube = createCube();
+    const cube = createRubiks();
 
     const positions = cube.positions;
     const positionBuffer = gl.createBuffer();
@@ -90,14 +90,7 @@ function initBuffers(gl) {
     // indices dans le tableau des sommets pour spécifier la position de chaque
     // triangle.
 
-    const indices = [
-        0,  1,  2,      0,  2,  3,    // avant
-        4,  5,  6,      4,  6,  7,    // arrière
-        8,  9,  10,     8,  10, 11,   // haut
-        12, 13, 14,     12, 14, 15,   // bas
-        16, 17, 18,     16, 18, 19,   // droite
-        20, 21, 22,     20, 22, 23,   // gauche
-    ];
+    const indices = cube.indices;
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
@@ -149,7 +142,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     mat4.translate(
         modelViewMatrix,
         modelViewMatrix,
-        [-0.0, 0.0, -6.0]);
+        [-0.0, 0.0, -20.0]);
     // Rotation
     mat4.rotate(
         modelViewMatrix,
@@ -221,7 +214,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
         modelViewMatrix);
 
     {
-        const vertexCount = 36;
+        const vertexCount = 36 * 9;
         const type = gl.UNSIGNED_SHORT;
         const offset = 0;
         gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
@@ -232,6 +225,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
         const vertexCount = 4;
         gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
     }
+
     cubeRotation += deltaTime;
 }
 
@@ -267,73 +261,120 @@ function loadShader(gl, type, source) {
     return shader;
 }
 
-function createCube(size, x, y, z) {
+function createRubiks(size) {
+    size = size ? size : 3;
 
-    size = size ? size : 1.0;
+    const C1 = createCube(2.2, -2.2, -2.2);
+    C1.indices = C1.indices.map(x => x + 24*0);
+
+    const C2 = createCube(2.2, 0, -2.2);
+    C2.indices = C2.indices.map(x => x + 24*1);
+    
+    const C3 = createCube(2.2, 2.2, -2.2);
+    C3.indices = C3.indices.map(x => x + 24*2);
+
+    const C4 = createCube(0, -2.2, -2.2);
+    C4.indices = C4.indices.map(x => x + 24*3);
+
+    const C5 = createCube(0, 0, -2.2);
+    C5.indices = C5.indices.map(x => x + 24*4);
+
+    const C6 = createCube(0, 2.2, -2.2);
+    C6.indices = C6.indices.map(x => x + 24*5);
+
+    const C7 = createCube(-2.2, -2.2, -2.2);
+    C7.indices = C7.indices.map(x => x + 24*6);
+
+    const C8 = createCube(-2.2, 0, -2.2);
+    C8.indices = C8.indices.map(x => x + 24*7);
+
+    const C9 = createCube(-2.2, 2.2, -2.2);
+    C9.indices = C9.indices.map(x => x + 24*8);
+
+    return {
+        positions: C1.positions.concat(C2.positions, C3.positions, C4.positions, C5.positions, C6.positions, C7.positions, C8.positions, C9.positions),
+        colors: C1.colors.concat(C2.colors, C3.colors, C4.colors, C5.colors, C6.colors, C7.colors, C8.colors, C9.colors),
+        indices: C1.indices.concat(C2.indices, C3.indices, C4.indices, C5.indices, C6.indices, C7.indices, C8.indices, C9.indices),
+    };
+}
+
+function createCube(x, y, z, size) {
+
     x = x ? x : 0.0;
     y = y ? y : 0.0;
     z = z ? z : 0.0;
+    size = size ? size : 1.0;
 
     const positions = [
-    // Face avant
-    -size + x, -size + y,  size + z,
-     size + x, -size + y,  size + z,
-     size + x,  size + y,  size + z,
-    -size + x,  size + y,  size + z,
+        // Face avant
+        -size + x, -size + y,  size + z,
+        size + x, -size + y,  size + z,
+        size + x,  size + y,  size + z,
+        -size + x,  size + y,  size + z,
 
-    // Face arrière
-    -size + x, -size + y, -size + z,
-    -size + x,  size + y, -size + z,
-     size + x,  size + y, -size + z,
-     size + x, -size + y, -size + z,
+        // Face arrière
+        -size + x, -size + y, -size + z,
+        -size + x,  size + y, -size + z,
+        size + x,  size + y, -size + z,
+        size + x, -size + y, -size + z,
 
-    // Face supérieure
-    -size + x,  size + y, -size + z,
-    -size + x,  size + y,  size + z,
-     size + x,  size + y,  size + z,
-     size + x,  size + y, -size + z,
+        // Face supérieure
+        -size + x,  size + y, -size + z,
+        -size + x,  size + y,  size + z,
+        size + x,  size + y,  size + z,
+        size + x,  size + y, -size + z,
 
-    // Face inférieure
-    -size + x, -size + y, -size + z,
-     size + x, -size + y, -size + z,
-     size + x, -size + y,  size + z,
-    -size + x, -size + y,  size + z,
+        // Face inférieure
+        -size + x, -size + y, -size + z,
+        size + x, -size + y, -size + z,
+        size + x, -size + y,  size + z,
+        -size + x, -size + y,  size + z,
 
-    // Face droite
-     size + x, -size + y, -size + z,
-     size + x,  size + y, -size + z,
-     size + x,  size + y,  size + z,
-     size + x, -size + y,  size + z,
+        // Face droite
+        size + x, -size + y, -size + z,
+        size + x,  size + y, -size + z,
+        size + x,  size + y,  size + z,
+        size + x, -size + y,  size + z,
 
-    // Face gauche
-    -size + x, -size + y, -size + z,
-    -size + x, -size + y,  size + z,
-    -size + x,  size + y,  size + z,
-    -size + x,  size + y, -size + z
-  ];
+        // Face gauche
+        -size + x, -size + y, -size + z,
+        -size + x, -size + y,  size + z,
+        -size + x,  size + y,  size + z,
+        -size + x,  size + y, -size + z
+    ];
 
     const faceColors = [
-    [1.0,  0.5,  0.0,  1.0],    // Face avant : orange
-    [1.0,  0.0,  0.0,  1.0],    // Face arrière : rouge
-    [0.0,  0.0,  1.0,  1.0],    // Face supérieure : bleu
-    [0.0,  1.0,  0.0,  1.0],    // Face infiérieure : vert
-    [1.0,  1.0,  1.0,  1.0],    // Face droite : blanc
-    [1.0,  1.0,  0.0,  1.0]     // Face gauche : jaune
-  ];
+        [1.0,  0.5,  0.0,  1.0],    // Face avant : orange
+        [1.0,  0.0,  0.0,  1.0],    // Face arrière : rouge
+        [0.0,  0.0,  1.0,  1.0],    // Face supérieure : bleu
+        [0.0,  1.0,  0.0,  1.0],    // Face infiérieure : vert
+        [1.0,  1.0,  1.0,  1.0],    // Face droite : blanc
+        [1.0,  1.0,  0.0,  1.0]     // Face gauche : jaune
+    ];
 
-  // Conversion du tableau des couleurs en une table pour tous les sommets
+    // Conversion du tableau des couleurs en une table pour tous les sommets
 
-  var colors = [];
+    var colors = [];
 
-  for (j=0; j<faceColors.length; j++) {
-    const c = faceColors[j];
+    for (j=0; j<faceColors.length; j++) {
+        const c = faceColors[j];
 
-    // Répéter chaque couleur quatre fois pour les quatre sommets d'une face
-    colors = colors.concat(c, c, c, c);
-  }
+        // Répéter chaque couleur quatre fois pour les quatre sommets d'une face
+        colors = colors.concat(c, c, c, c);
+    }
+
+    const indices = [
+        0,  1,  2,      0,  2,  3,    // avant
+        4,  5,  6,      4,  6,  7,    // arrière
+        8,  9,  10,     8,  10, 11,   // haut
+        12, 13, 14,     12, 14, 15,   // bas
+        16, 17, 18,     16, 18, 19,   // droite
+        20, 21, 22,     20, 22, 23,   // gauche
+    ];
 
     return {
         positions: positions,
         colors: colors,
+        indices: indices,
     };
 }
