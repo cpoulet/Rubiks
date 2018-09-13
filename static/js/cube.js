@@ -57,18 +57,20 @@ function main() {
     // Here's where we call the routine that builds all the
     // objects we'll be drawing.
     const buffers = initBuffers(gl);
+    
+    drawScene(gl, programInfo, buffers);
 
-    var then = 0;
+//    var then = 0;
 
     // Draw the scene repeatedly
-    function render(now) {
-        now *= 0.001;  // convert to seconds
-        const deltaTime = now - then;
-        then = now;
-        drawScene(gl, programInfo, buffers, deltaTime);
-        requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+//    function render(now) {
+//        now *= 0.001;  // convert to seconds
+//        const deltaTime = now - then;
+//        then = now;
+//        drawScene(gl, programInfo, buffers, deltaTime);
+//        requestAnimationFrame(render);
+//    }
+//    requestAnimationFrame(render);
 
 }
 
@@ -137,7 +139,6 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     // the center of the scene.
     const modelViewMatrix = mat4.create();
 
-
     // Translation
     mat4.translate(
         modelViewMatrix,
@@ -147,13 +148,18 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     mat4.rotate(
         modelViewMatrix,
         modelViewMatrix,
-        cubeRotation,
-        [0, 0, 1]);
+        Math.PI / 8,
+        [1, 0, 0]);
     mat4.rotate(
         modelViewMatrix,
         modelViewMatrix,
-        cubeRotation * 0.7,
+        Math.PI / 4,
         [0, 1, 0]);
+//    mat4.rotate(
+//        modelViewMatrix,
+//        modelViewMatrix,
+//        cubeRotation * 0.7,
+//        [0, 0, 0]);
 
 
     // Tell WebGL how to pull out the positions from the position
@@ -214,7 +220,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
         modelViewMatrix);
 
     {
-        const vertexCount = 36 * 9;
+        const vertexCount = 36 * 3 * 3 * 3;
         const type = gl.UNSIGNED_SHORT;
         const offset = 0;
         gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
@@ -261,40 +267,30 @@ function loadShader(gl, type, source) {
     return shader;
 }
 
-function createRubiks(size) {
-    size = size ? size : 3;
+function createRubiks() {
 
-    const C1 = createCube(2.2, -2.2, -2.2);
-    C1.indices = C1.indices.map(x => x + 24*0);
+    const arr = [2.1, 0, -2.1];
 
-    const C2 = createCube(2.2, 0, -2.2);
-    C2.indices = C2.indices.map(x => x + 24*1);
-    
-    const C3 = createCube(2.2, 2.2, -2.2);
-    C3.indices = C3.indices.map(x => x + 24*2);
-
-    const C4 = createCube(0, -2.2, -2.2);
-    C4.indices = C4.indices.map(x => x + 24*3);
-
-    const C5 = createCube(0, 0, -2.2);
-    C5.indices = C5.indices.map(x => x + 24*4);
-
-    const C6 = createCube(0, 2.2, -2.2);
-    C6.indices = C6.indices.map(x => x + 24*5);
-
-    const C7 = createCube(-2.2, -2.2, -2.2);
-    C7.indices = C7.indices.map(x => x + 24*6);
-
-    const C8 = createCube(-2.2, 0, -2.2);
-    C8.indices = C8.indices.map(x => x + 24*7);
-
-    const C9 = createCube(-2.2, 2.2, -2.2);
-    C9.indices = C9.indices.map(x => x + 24*8);
+    let i = 0;
+    var positions = [];
+    var colors = [];
+    var indices = [];
+    for (z in arr) {
+        for (y in arr) {
+            for (x in arr) {
+                const c = createCube(arr[x], arr[y], arr[z], 1);
+                positions = positions.concat(c.positions);
+                colors = colors.concat(c.colors);
+                indices = indices.concat(c.indices.map(x => x + 24 * i));
+                i += 1;
+            }
+        }
+    }
 
     return {
-        positions: C1.positions.concat(C2.positions, C3.positions, C4.positions, C5.positions, C6.positions, C7.positions, C8.positions, C9.positions),
-        colors: C1.colors.concat(C2.colors, C3.colors, C4.colors, C5.colors, C6.colors, C7.colors, C8.colors, C9.colors),
-        indices: C1.indices.concat(C2.indices, C3.indices, C4.indices, C5.indices, C6.indices, C7.indices, C8.indices, C9.indices),
+        positions: positions,
+        colors: colors,
+        indices: indices,
     };
 }
 
@@ -347,19 +343,15 @@ function createCube(x, y, z, size) {
         [1.0,  0.5,  0.0,  1.0],    // Face avant : orange
         [1.0,  0.0,  0.0,  1.0],    // Face arrière : rouge
         [0.0,  0.0,  1.0,  1.0],    // Face supérieure : bleu
-        [0.0,  1.0,  0.0,  1.0],    // Face infiérieure : vert
+        [0.0,  1.0,  0.0,  1.0],    // Face inférieure : vert
         [1.0,  1.0,  1.0,  1.0],    // Face droite : blanc
         [1.0,  1.0,  0.0,  1.0]     // Face gauche : jaune
     ];
-
-    // Conversion du tableau des couleurs en une table pour tous les sommets
+    const black = [0.0, 0.0, 0.0, 1.0]; // Face interieures
 
     var colors = [];
-
     for (j=0; j<faceColors.length; j++) {
         const c = faceColors[j];
-
-        // Répéter chaque couleur quatre fois pour les quatre sommets d'une face
         colors = colors.concat(c, c, c, c);
     }
 
