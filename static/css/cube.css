@@ -1,12 +1,7 @@
 #cube {
     display : block;
     position: absolute;
-    height: 500px;
-    width: 500px;
+    height: 480px;
+    width: 640px;
     border: solid;
-    background-color : black;
-}
-
-body {
-    text-align : center;
 }

@@ -1,6 +1,6 @@
 main();
 
-var squareRotation = 0.0;
+var cubeRotation = 0.0;
 
 function main() {
     const canvas = document.querySelector('#cube');
@@ -76,7 +76,7 @@ function initBuffers(gl) {
 
     const cube = createCube();
 
-    const position = cube.positions;
+    const positions = cube.positions;
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
@@ -86,14 +86,31 @@ function initBuffers(gl) {
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
+    // Ce tableau définit chaque face comme deux triangles, en utilisant les
+    // indices dans le tableau des sommets pour spécifier la position de chaque
+    // triangle.
+
+    const indices = [
+        0,  1,  2,      0,  2,  3,    // avant
+        4,  5,  6,      4,  6,  7,    // arrière
+        8,  9,  10,     8,  10, 11,   // haut
+        12, 13, 14,     12, 14, 15,   // bas
+        16, 17, 18,     16, 18, 19,   // droite
+        20, 21, 22,     20, 22, 23,   // gauche
+    ];
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
     return {
         position: positionBuffer,
         color: colorBuffer,
+        indices: indexBuffer,
     };
 }
 
 function drawScene(gl, programInfo, buffers, deltaTime) {
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clearDepth(1.0);                 // Clear everything
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
@@ -137,8 +154,14 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     mat4.rotate(
         modelViewMatrix,
         modelViewMatrix,
-        squareRotation,
-        [0, 0, 0]);
+        cubeRotation,
+        [0, 0, 1]);
+    mat4.rotate(
+        modelViewMatrix,
+        modelViewMatrix,
+        cubeRotation * 0.7,
+        [0, 1, 0]);
+
 
     // Tell WebGL how to pull out the positions from the position
     // buffer into the vertexPosition attribute
@@ -180,6 +203,8 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
             programInfo.attribLocations.vertexColor);
     }
 
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+
     // Tell WebGL to use our program when drawing
 
     gl.useProgram(programInfo.program);
@@ -196,11 +221,18 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
         modelViewMatrix);
 
     {
+        const vertexCount = 36;
+        const type = gl.UNSIGNED_SHORT;
+        const offset = 0;
+        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    }
+
+    {
         const offset = 0;
         const vertexCount = 4;
         gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
     }
-    squareRotation += deltaTime;
+    cubeRotation += deltaTime;
 }
 
 function initShaderProgram(gl, vsSource, fsSource) {
