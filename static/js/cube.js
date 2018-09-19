@@ -46,7 +46,7 @@ function main() {
     let archi = createArchi();
     show(archi)
     
-    let stack = ['F', 'U', 'R', 'R', 'U', 'L'].reverse();
+    let stack = ['D', 'B', 'R', 'D'].reverse();
     let i = 0;
     let move = nextMove(stack, Rubiks, archi);
     scene.registerBeforeRender(function() {
@@ -99,16 +99,24 @@ function U(Rubiks, archi) {
     Rubiks[13].rotate(BABYLON.Axis.Y, Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
+function D(Rubiks, archi) {
+    Rubiks[13].rotate(BABYLON.Axis.Y, -Math.PI / STEP, BABYLON.Space.WORLD);
+}
+
 function F(Rubiks, archi) {
     Rubiks[13].rotate(BABYLON.Axis.Z, Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
-function R(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.X, -Math.PI / STEP, BABYLON.Space.WORLD);
+function B(Rubiks, archi) {
+    Rubiks[13].rotate(BABYLON.Axis.Z, -Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
 function L(Rubiks, archi) {
     Rubiks[13].rotate(BABYLON.Axis.X, Math.PI / STEP, BABYLON.Space.WORLD);
+}
+
+function R(Rubiks, archi) {
+    Rubiks[13].rotate(BABYLON.Axis.X, -Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
 function createArchi() {
@@ -122,8 +130,16 @@ function createArchi() {
 function getF(cube) {return cube.slice(0,9);}
 function getB(cube) {return cube.slice(18,);}
 function getU(cube) {return cube.filter(function(v, i) {return i % 9 < 3});}
-function getR(cube) {return cube.filter(function(v, i) {return i % 3 == 2});}
+function getD(cube) {return cube.filter(function(v, i) {return i % 9 >= 6});}
 function getL(cube) {return cube.filter(function(v, i) {return i % 3 == 0});}
+function getR(cube) {return cube.filter(function(v, i) {return i % 3 == 2});}
+
+function prime(archi, tmp, foo) {
+    for (let i=0; i < 3; i++) {
+        window[foo](archi, tmp);
+        tmp = archi.slice(0);
+    }
+}
 
 // 18 19 20
 //  9 10 11
@@ -143,6 +159,24 @@ function rotU(archi, tmp) {
     archi[9] = tmp[1];
 }
 
+//  6  7  8
+// 15 16 17
+// 24 25 26
+//
+// 24 15  6
+// 25 10  7
+// 26 17  8
+function rotD(archi, tmp) {
+    archi[6] = tmp[24];
+    archi[7] = tmp[15];
+    archi[8] = tmp[6];
+    archi[17] = tmp[7];
+    archi[26] = tmp[8];
+    archi[25] = tmp[17];
+    archi[24] = tmp[26];
+    archi[15] = tmp[25];
+}
+
 // 0 1 2
 // 3 4 5
 // 6 7 8
@@ -159,6 +193,24 @@ function rotF(archi, tmp) {
     archi[7] = tmp[5];
     archi[6] = tmp[8];
     archi[3] = tmp[7];
+}
+
+// 20 19 18
+// 23 22 21
+// 26 25 24
+//
+// 26 23 20
+// 25 22 19
+// 24 21 18
+function rotB(archi, tmp) {
+    archi[20] = tmp[26];
+    archi[19] = tmp[23];
+    archi[18] = tmp[20];
+    archi[21] = tmp[19];
+    archi[24] = tmp[18];
+    archi[25] = tmp[21];
+    archi[26] = tmp[24];
+    archi[23] = tmp[25];
 }
 
 //  2 11 20
