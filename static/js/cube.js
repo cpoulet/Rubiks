@@ -1,8 +1,8 @@
+const STEP = 64;
+
 //testArchi();
 //testVisu();
 main();
-
-const STEP = 64;
 
 function testVisu() {
     const canvas = document.querySelector('#cube');
@@ -22,11 +22,8 @@ function testVisu() {
      });
 }
 
-function updateArchi(archi, move) {
-    window['rot' + move](archi);
-}
-
 function testArchi() {
+
     let archi = createArchi();
     show(archi)
     let stack = ['L', 'L', 'L', 'L'].reverse();
@@ -46,7 +43,7 @@ function main() {
     let archi = createArchi();
     show(archi)
     
-    let stack = ['D', 'B', 'R', 'D'].reverse();
+    let stack = ['R', 'R_', 'R', 'R_'].reverse();
     let i = 0;
     let move = nextMove(stack, Rubiks, archi);
     scene.registerBeforeRender(function() {
@@ -55,7 +52,7 @@ function main() {
                 i = 0;
                 move = nextMove(stack, Rubiks, archi);
             } else {
-                window[move](Rubiks, archi);
+                window[move[0]](Rubiks, archi, move.length);
                 i++;
             }
         }
@@ -69,18 +66,23 @@ function main() {
 function nextMove(stack, Rubiks, archi) {
     let move = stack.pop();
     if (move) {
+        let dir = move.length == 1 ? 1 : -1;
         console.log("_____", move, "_____");
-        setParents(Rubiks, move, archi);
-        updateArchi(archi, move);
+        setParents(Rubiks, move[0], archi);
+        updateArchi(archi, move[0], dir);
         show(archi);
         return move;
     }
     return false;
 }
 
-function updateArchi(archi, move) {
+function updateArchi(archi, move, dir) {
     let tmp = archi.slice(0);
-    window['rot' + move](archi, tmp);
+    if (dir == 1) {
+        window['rot' + move](archi, tmp);
+    } else {
+        prime(archi, tmp, 'rot' + move);
+    }
 }
 
 function setParents(Rubiks, move, archi) {
@@ -95,28 +97,34 @@ function setParents(Rubiks, move, archi) {
     }
 }
 
-function U(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.Y, Math.PI / STEP, BABYLON.Space.WORLD);
+function U(Rubiks, archi, dir) {
+    dir = dir == 1 ? dir : -1;
+    Rubiks[13].rotate(BABYLON.Axis.Y, dir * Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
-function D(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.Y, -Math.PI / STEP, BABYLON.Space.WORLD);
+function D(Rubiks, archi, dir) {
+    dir = dir == 1 ? dir : -1;
+    Rubiks[13].rotate(BABYLON.Axis.Y, dir * -Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
-function F(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.Z, Math.PI / STEP, BABYLON.Space.WORLD);
+function F(Rubiks, archi, dir) {
+    dir = dir == 1 ? dir : -1;
+    Rubiks[13].rotate(BABYLON.Axis.Z, dir * Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
-function B(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.Z, -Math.PI / STEP, BABYLON.Space.WORLD);
+function B(Rubiks, archi, dir) {
+    dir = dir == 1 ? dir : -1;
+    Rubiks[13].rotate(BABYLON.Axis.Z, dir * -Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
-function L(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.X, Math.PI / STEP, BABYLON.Space.WORLD);
+function L(Rubiks, archi, dir) {
+    dir = dir == 1 ? dir : -1;
+    Rubiks[13].rotate(BABYLON.Axis.X, dir * Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
-function R(Rubiks, archi) {
-    Rubiks[13].rotate(BABYLON.Axis.X, -Math.PI / STEP, BABYLON.Space.WORLD);
+function R(Rubiks, archi, dir) {
+    dir = dir == 1 ? dir : -1;
+    Rubiks[13].rotate(BABYLON.Axis.X, dir * -Math.PI / STEP, BABYLON.Space.WORLD);
 }
 
 function createArchi() {
