@@ -46,7 +46,7 @@ function main() {
         show(archi)
     }
     
-    let stack = ['R', 'R_', 'R', 'R_'].reverse();
+    let stack = ['R', 'F', 'U', 'R_', 'U_', 'B'].reverse();
     let i = 0;
     let move = nextMove(stack, Rubiks, archi);
     scene.registerBeforeRender(function() {

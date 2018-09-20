@@ -5,21 +5,17 @@ import sys
 import re
 from random import getrandbits, choice
 
+Orange  = lambda s : "\033[1;48;5;208m" + s + "\033[1;0m"
+White   = lambda s : "\033[1;30;107m" + s + "\033[1;0m"
+Green   = lambda s : "\033[1;48;5;46m" + s + "\033[1;0m"
+Red     = lambda s : "\033[1;48;5;196m" + s + "\033[1;0m"
+Blue    = lambda s : "\033[1;48;5;4m" + s + "\033[1;0m"
+Yellow  = lambda s : "\033[1;30;48;5;226m" + s + "\033[1;0m"
+
 class Cube:
 
-#         18 19 20
-#       9 10 11 23
-#    0  1  2 14 26
-#    3  4  5 17
-#    6  7  8
-
-#    ORIENTATION FFS
-
-    CROSS = [7,15,16,17,25]
-    SIDE  = [3,4,5,6,7,8,12,13,14,15,16,17,21,22,23,24,25,26]
-
     def __init__(self):
-        self.cube = np.arange(27).reshape(3,3,3)
+        self.cube = np.arange(54).reshape(6,3,3)
         print('Starting...\n')
         print(self)
 
@@ -45,31 +41,73 @@ class Cube:
                 sequence.append(m)
         self.mix(sequence)
 
+    def swap4(a, b, c, d, k):
+        if k == 1:
+            return d.tolist(), a.tolist(), b.tolist(), c.tolist()
+        else:
+            return b.tolist(), c.tolist(), d.tolist(), a.tolist()
+
     def U(self, k):
-        self.cube[:,0,:] = np.rot90(self.cube[:,0,:], k)
+        self.cube[4,:,:] = np.rot90(self.cube[4,:,:], -k)
+        self.cube[:4,0,:] = np.roll(self.cube[:4,0,:], -k, axis=0)
 
     def D(self, k):
-        self.cube[:,2,:] = np.rot90(self.cube[:,2,:], -k)
+        self.cube[5,:,:] = np.rot90(self.cube[5,:,:], -k)
+        self.cube[:4,2,:] = np.roll(self.cube[:4,2,:], k, axis=0)
 
     def L(self, k):
-        self.cube[:,:,0] = np.rot90(self.cube[:,:,0], -k)
+        self.cube[3,:,:] = np.rot90(self.cube[3,:,:], k)
 
     def R(self, k):
-        self.cube[:,:,2] = np.rot90(self.cube[:,:,2], k)
+        self.cube[1,:,:] = np.rot90(self.cube[1,:,:], -k)
+        self.cube[0,:,2], self.cube[4,2,:], self.cube[2,:,0], self.cube[5,0,:] = Cube.swap4(self.cube[0,:,2], self.cube[4,2,:], self.cube[2,:,0], self.cube[5,0,:], k)
 
     def F(self, k):
-        self.cube[0,:,:] = np.rot90(self.cube[0,:,:], -k)
+        self.cube[0,:,:] = np.rot90(self.cube[0,:,:], k)
 
     def B(self, k):
         self.cube[2,:,:] = np.rot90(self.cube[2,:,:], k)
 
     def __repr__(self):
-        cube = self.cube.reshape(27)
-        s = ' '*6 + '{:2d} {:2d} {:2d}'.format(cube[18], cube[19], cube[20])
-        s += '\n' + ' '*3 + '{:2d} {:2d} {:2d} {:2d}'.format(cube[9], cube[10], cube[11], cube[23])
-        s += '\n' + '{:2d} {:2d} {:2d} {:2d} {:2d}'.format(cube[0], cube[1], cube[2], cube[14], cube[26])
-        s += '\n' + '{:2d} {:2d} {:2d} {:2d}'.format(cube[3], cube[4], cube[5], cube[17])
-        s += '\n' + '{:2d} {:2d} {:2d}'.format(cube[6], cube[7], cube[8])
+
+#           36 37 38
+#           39 40 41
+#           42 43 44 
+#   0  1  2  9 10 11 18 19 20 27 28 29
+#   3  4  5 12 13 14 21 22 23 30 31 32
+#   6  7  8 15 16 17 24 25 26 33 34 35
+#           45 46 47
+#           48 49 50
+#           51 52 53
+
+        def color(li):
+            s = ''
+            for i in li:
+                if cube[i] < 9:
+                    s += Orange('{:2d}'.format(cube[i]))
+                elif 9 <= cube[i] and cube[i] < 18:
+                    s += Green('{:2d}'.format(cube[i]))
+                elif 18 <= cube[i] and cube[i] < 27:
+                    s += Red('{:2d}'.format(cube[i]))
+                elif 27 <= cube[i] and cube[i] < 36:
+                    s += Blue('{:2d}'.format(cube[i]))
+                elif 36 <= cube[i] and cube[i] < 45:
+                    s += White('{:2d}'.format(cube[i]))
+                elif 45 <= cube[i]:
+                    s += Yellow('{:2d}'.format(cube[i]))
+                s += ' '
+            return s
+
+        cube = self.cube.reshape(54)
+        s = ' '*10 + color([36, 37, 38])
+        s += '\n' + ' '*10 + color([39, 40, 41])
+        s += '\n' + ' '*10 + color([42, 43, 44])
+        s += '\n' + ' ' + color([0, 1, 2, 9, 10, 11, 18, 19, 20, 27, 28, 29])
+        s += '\n' + ' ' + color([3, 4, 5, 12, 13, 14, 21, 22, 23, 30, 31, 32])
+        s += '\n' + ' ' + color([6, 7, 8, 15, 16, 17, 24, 25, 26, 33, 34, 35])
+        s += '\n' + ' '*10 + color([45, 46, 47])
+        s += '\n' + ' '*10 + color([48, 49, 50])
+        s += '\n' + ' '*10 + color([51, 52, 53])
         return s
 
     def __str__(self):
@@ -93,10 +131,11 @@ def main(argv):
     if len(argv) != 2:
         raise Exception('Only one argument is needed.')
     r = RubikSolver()
-    r.mix(argv[1])
+    #r.mix(argv[1])
 
 if __name__ == "__main__":
-    try:
-	    main(sys.argv)
-    except Exception as e:
-        print('Error : ' + str(e))
+    C = Cube()
+#    try:
+#	    main(sys.argv)
+#    except Exception as e:
+#        print('Error : ' + str(e))
