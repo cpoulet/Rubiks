@@ -4,26 +4,64 @@ import numpy as np
 import sys
 import re
 
-class Face:
-
-    COLOR = {0: 'blue', 1: 'white', 2: 'orange', 3: 'red', 4: 'yellow', 5: 'green'}
-
-    def __init__(self, color):
-        self.color = color;
-        self.grid = np.full((3,3), )
-
 class Cube:
 
-    def __init__(self):
-        self.cube = np.array([np.full((3,3), x) for x in range(6)])
-        
+#         18 19 20
+#       9 10 11 23
+#    0  1  2 14 26
+#    3  4  5 17
+#    6  7  8
 
+    def __init__(self):
+        self.cube = np.arange(27).reshape(3,3,3)
+        print('Starting...\n')
+        print(self)
+
+    def mix(self, sequence):
+        print('\n...mixing...\n')
+        while (sequence):
+            m = sequence.pop()
+            if m[-1] == "2":
+                sequence.append(m[0])
+            k = 1 if m[-1] != "'" else -1
+            getattr(self, m[0])(k)
+        print(self)
+
+    def U(self, k):
+        self.cube[:,0,:] = np.rot90(self.cube[:,0,:], k)
+
+    def D(self, k):
+        self.cube[:,2,:] = np.rot90(self.cube[:,2,:], -k)
+
+    def L(self, k):
+        self.cube[:,:,0] = np.rot90(self.cube[:,:,0], -k)
+
+    def R(self, k):
+        self.cube[:,:,2] = np.rot90(self.cube[:,:,2], k)
+
+    def F(self, k):
+        self.cube[0,:,:] = np.rot90(self.cube[0,:,:], -k)
+
+    def B(self, k):
+        self.cube[2,:,:] = np.rot90(self.cube[2,:,:], k)
+
+    def __repr__(self):
+        cube = self.cube.reshape(27)
+        s = ' '*6 + '{:2d} {:2d} {:2d}'.format(cube[18], cube[19], cube[20])
+        s += '\n' + ' '*3 + '{:2d} {:2d} {:2d} {:2d}'.format(cube[9], cube[10], cube[11], cube[23])
+        s += '\n' + '{:2d} {:2d} {:2d} {:2d} {:2d}'.format(cube[0], cube[1], cube[2], cube[14], cube[26])
+        s += '\n' + '{:2d} {:2d} {:2d} {:2d}'.format(cube[3], cube[4], cube[5], cube[17])
+        s += '\n' + '{:2d} {:2d} {:2d}'.format(cube[6], cube[7], cube[8])
+        return s
+
+    def __str__(self):
+        return self.__repr__()
 
 class RubikSolver:
 
     def __init__(self):
         self.sequence = []
-        self.cube = 
+        self.cube = Cube()
 
     def mix(self, sequence):
         for x in sequence.split():
@@ -31,6 +69,7 @@ class RubikSolver:
                 self.sequence.append(x)
             else:
                 raise Exception('Parsing Error')
+        self.cube.mix(self.sequence[::-1]);
 
 def main(argv):
     if len(argv) != 2:
