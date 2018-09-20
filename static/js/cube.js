@@ -1,4 +1,5 @@
 const STEP = 64;
+const VERBOSE = false;
 
 //testArchi();
 //testVisu();
@@ -41,7 +42,9 @@ function main() {
 
     let Rubiks = createRubiks(scene);
     let archi = createArchi();
-    show(archi)
+    if (VERBOSE) {
+        show(archi)
+    }
     
     let stack = ['R', 'R_', 'R', 'R_'].reverse();
     let i = 0;
@@ -67,10 +70,14 @@ function nextMove(stack, Rubiks, archi) {
     let move = stack.pop();
     if (move) {
         let dir = move.length == 1 ? 1 : -1;
-        console.log("_____", move, "_____");
+        if (VERBOSE) {
+            console.log("_____", move, "_____");
+        }
         setParents(Rubiks, move[0], archi);
         updateArchi(archi, move[0], dir);
-        show(archi);
+        if (VERBOSE) {
+            show(archi);
+        }
         return move;
     }
     return false;
@@ -87,7 +94,6 @@ function updateArchi(archi, move, dir) {
 
 function setParents(Rubiks, move, archi) {
     let set = new Set(window['get' + move](archi));
-    console.log(set);
     for (let i = 0; i < 27; i++) {
         if (set.has(i)) {
             Rubiks[i].setParent(Rubiks[13]);

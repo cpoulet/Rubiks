@@ -3,6 +3,7 @@
 import numpy as np
 import sys
 import re
+from random import getrandbits, choice
 
 class Cube:
 
@@ -12,6 +13,11 @@ class Cube:
 #    3  4  5 17
 #    6  7  8
 
+#    ORIENTATION FFS
+
+    CROSS = [7,15,16,17,25]
+    SIDE  = [3,4,5,6,7,8,12,13,14,15,16,17,21,22,23,24,25,26]
+
     def __init__(self):
         self.cube = np.arange(27).reshape(3,3,3)
         print('Starting...\n')
@@ -19,13 +25,25 @@ class Cube:
 
     def mix(self, sequence):
         print('\n...mixing...\n')
-        while (sequence):
+        while sequence:
             m = sequence.pop()
             if m[-1] == "2":
                 sequence.append(m[0])
             k = 1 if m[-1] != "'" else -1
             getattr(self, m[0])(k)
         print(self)
+
+    def randmix(self, n):
+        li = ['F','R','U', 'B', 'L', 'D']
+        sequence = []
+        while (len(sequence) < n):
+            m = choice(li)
+            m = m if getrandbits(1) else m + "'"
+            if sequence and sequence[-1] == m:
+                sequence[-1] = m[0] + '2'
+            else:
+                sequence.append(m)
+        self.mix(sequence)
 
     def U(self, k):
         self.cube[:,0,:] = np.rot90(self.cube[:,0,:], k)
