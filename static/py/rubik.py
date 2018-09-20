@@ -47,26 +47,29 @@ class Cube:
         else:
             return b.tolist(), c.tolist(), d.tolist(), a.tolist()
 
-    def U(self, k):
+    def U(self, k=1):
         self.cube[4,:,:] = np.rot90(self.cube[4,:,:], -k)
         self.cube[:4,0,:] = np.roll(self.cube[:4,0,:], -k, axis=0)
 
-    def D(self, k):
+    def D(self, k=1):
         self.cube[5,:,:] = np.rot90(self.cube[5,:,:], -k)
         self.cube[:4,2,:] = np.roll(self.cube[:4,2,:], k, axis=0)
 
-    def L(self, k):
-        self.cube[3,:,:] = np.rot90(self.cube[3,:,:], k)
+    def L(self, k=1):
+        self.cube[3,:,:] = np.rot90(self.cube[3,:,:], -k)
+        self.cube[0,:,0], self.cube[5,2,:], self.cube[2,:,2], self.cube[4,0,:] = Cube.swap4(self.cube[0,:,0], self.cube[5,2,::-1], self.cube[2,:,2], self.cube[4,0,::-1], k)
 
-    def R(self, k):
+    def R(self, k=1):
         self.cube[1,:,:] = np.rot90(self.cube[1,:,:], -k)
-        self.cube[0,:,2], self.cube[4,2,:], self.cube[2,:,0], self.cube[5,0,:] = Cube.swap4(self.cube[0,:,2], self.cube[4,2,:], self.cube[2,:,0], self.cube[5,0,:], k)
+        self.cube[0,:,2], self.cube[4,2,:], self.cube[2,:,0], self.cube[5,0,:] = Cube.swap4(self.cube[0,::-1,2], self.cube[4,2,:], self.cube[2,::-1,0], self.cube[5,0,:], k)
 
-    def F(self, k):
-        self.cube[0,:,:] = np.rot90(self.cube[0,:,:], k)
+    def F(self, k=1):
+        self.cube[0,:,:] = np.rot90(self.cube[0,:,:], -k)
+        self.cube[1,:,0], self.cube[5,:,0], self.cube[3,:,2], self.cube[4,:,0] = Cube.swap4(self.cube[1,:,0], self.cube[5,:,0], self.cube[3,:,2], self.cube[4,:,0], k)
 
-    def B(self, k):
-        self.cube[2,:,:] = np.rot90(self.cube[2,:,:], k)
+    def B(self, k=1):
+        self.cube[2,:,:] = np.rot90(self.cube[2,:,:], -k)
+        self.cube[1,:,2], self.cube[4,:,2], self.cube[3,:,0], self.cube[5,:,2] = Cube.swap4(self.cube[1,:,2], self.cube[4,::-1,2], self.cube[3,::-1,0], self.cube[5,:,2], k)
 
     def __repr__(self):
 
