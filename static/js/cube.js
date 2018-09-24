@@ -1,6 +1,9 @@
 const STEP = 64;
 const VERBOSE = false;
 
+var pressed = false;
+var stack = [];
+
 //testArchi();
 //testVisu();
 main();
@@ -24,7 +27,6 @@ function testVisu() {
 }
 
 function testArchi() {
-
     let archi = createArchi();
     show(archi)
     let stack = ['L', 'L', 'L', 'L'].reverse();
@@ -46,24 +48,54 @@ function main() {
         show(archi)
     }
     
-    let stack = ['R', 'F', 'U', 'R_', 'U_', 'B'].reverse();
+    document.addEventListener('keydown', keyDownHandler, false);
+    document.addEventListener('keyup', keyUpHandler, false);
+
+    stack = ['R', 'R', 'U', 'U'].reverse();
     let i = 0;
-    let move = nextMove(stack, Rubiks, archi);
+    let pending = false;
     scene.registerBeforeRender(function() {
-        if (move) {
+        if (pending) {
             if (i == STEP / 2) {
                 i = 0;
-                move = nextMove(stack, Rubiks, archi);
+                pending = false;
             } else {
                 window[move[0]](Rubiks, archi, move.length);
                 i++;
             }
+        } else {
+            move = nextMove(stack, Rubiks, archi);
+            pending = move ? true : false;
         }
     });
 
     engine.runRenderLoop(function() {
         scene.render();
      });
+}
+
+// shift = 16
+function keyDownHandler(event) {
+    if (pressed == true) {return;}
+    pressed = true;
+    let i = event.keyCode;
+    if (i == 70) {
+        stack.unshift('F');
+    } else if (i == 82) {
+        stack.unshift('R');
+    } else if (i == 85) {
+        stack.unshift('U');
+    } else if (i == 66) {
+        stack.unshift('B');
+    } else if (i == 76) {
+        stack.unshift('L');
+    } else if (i == 68) {
+        stack.unshift('D');
+    }
+}
+
+function keyUpHandler(event) {
+    pressed = false;
 }
 
 function nextMove(stack, Rubiks, archi) {

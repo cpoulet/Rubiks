@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import json
 import sys
 import re
 from random import getrandbits, choice
@@ -12,34 +13,58 @@ Red     = lambda s : "\033[1;48;5;196m" + s + "\033[1;0m"
 Blue    = lambda s : "\033[1;48;5;4m" + s + "\033[1;0m"
 Yellow  = lambda s : "\033[1;30;48;5;226m" + s + "\033[1;0m"
 
-class Cube:
+class Heuristic:
 
-    def __init__(self):
-        self.cube = np.arange(54).reshape(6,3,3)
-        print('Starting...\n')
-        print(self)
+    def cross(cube):
+        goal = [46,16,50,25,52,34,48,7]
 
-    def mix(self, sequence):
-        print('\n...mixing...\n')
-        while sequence:
-            m = sequence.pop()
-            if m[-1] == "2":
-                sequence.append(m[0])
-            k = 1 if m[-1] != "'" else -1
-            getattr(self, m[0])(k)
-        print(self)
+        def errors(cube):
+            #number of miss-placed face
+            n = len(goal)
+            for face in goal:
+                if cube[face] == face:
+                    n -= 1
+            return n
 
-    def randmix(self, n):
-        li = ['F','R','U', 'B', 'L', 'D']
-        sequence = []
-        while (len(sequence) < n):
-            m = choice(li)
-            m = m if getrandbits(1) else m + "'"
-            if sequence and sequence[-1] == m:
-                sequence[-1] = m[0] + '2'
+        def manhattan(cube):
+            return
+
+        return errors(cube)
+
+class State:
+    def __init__(self, cube):
+        self.cube = cube
+        self.parent = None
+#        print(self)
+
+    def children(self, prev=False):
+        moves = {'F','R','U', 'B', 'L', 'D'}
+        antimoves = {'F','R','U', 'B', 'L', 'D'}
+        if prev:
+            if len(prev) == 1:
+                antimoves.discard(prev)
             else:
-                sequence.append(m)
-        self.mix(sequence)
+                moves.discard(prev)
+        return [getattr(State, 'get' + move)(self.cube.copy()) for move in moves] + [getattr(State, 'get' + move)(self.cube.copy(), -1) for move in antimoves]
+
+    def goal(self, g):
+        cube = self.cube.reshape(54)
+        for x in g:
+            if cube[x] != x:
+                return False
+        return True
+    
+    def __eq__(self, o):
+        return self.cube == o.cube
+
+    def __hash__(self):
+        return ",".join(map(str, self.cube.reshape(54).tolist()))
+
+#    def __repr__(self):
+#        return State.print(self.cube)
+
+    def __str__(self):
+        return State.print(self.cube)
 
     def swap4(a, b, c, d, k):
         if k == 1:
@@ -47,31 +72,37 @@ class Cube:
         else:
             return b.tolist(), c.tolist(), d.tolist(), a.tolist()
 
-    def U(self, k=1):
-        self.cube[4,:,:] = np.rot90(self.cube[4,:,:], -k)
-        self.cube[:4,0,:] = np.roll(self.cube[:4,0,:], -k, axis=0)
+    def getU(cube, k=1):
+        cube[4,:,:] = np.rot90(cube[4,:,:], -k)
+        cube[:4,0,:] = np.roll(cube[:4,0,:], -k, axis=0)
+        return State(cube)
 
-    def D(self, k=1):
-        self.cube[5,:,:] = np.rot90(self.cube[5,:,:], -k)
-        self.cube[:4,2,:] = np.roll(self.cube[:4,2,:], k, axis=0)
+    def getD(cube, k=1):
+        cube[5,:,:] = np.rot90(cube[5,:,:], -k)
+        cube[:4,2,:] = np.roll(cube[:4,2,:], k, axis=0)
+        return State(cube)
 
-    def L(self, k=1):
-        self.cube[3,:,:] = np.rot90(self.cube[3,:,:], -k)
-        self.cube[0,:,0], self.cube[5,2,:], self.cube[2,:,2], self.cube[4,0,:] = Cube.swap4(self.cube[0,:,0], self.cube[5,2,::-1], self.cube[2,:,2], self.cube[4,0,::-1], k)
+    def getL(cube, k=1):
+        cube[3,:,:] = np.rot90(cube[3,:,:], -k)
+        cube[0,:,0], cube[5,2,:], cube[2,:,2], cube[4,0,:] = State.swap4(cube[0,:,0], cube[5,2,::-1], cube[2,:,2], cube[4,0,::-1], k)
+        return State(cube)
 
-    def R(self, k=1):
-        self.cube[1,:,:] = np.rot90(self.cube[1,:,:], -k)
-        self.cube[0,:,2], self.cube[4,2,:], self.cube[2,:,0], self.cube[5,0,:] = Cube.swap4(self.cube[0,::-1,2], self.cube[4,2,:], self.cube[2,::-1,0], self.cube[5,0,:], k)
+    def getR(cube, k=1):
+        cube[1,:,:] = np.rot90(cube[1,:,:], -k)
+        cube[0,:,2], cube[4,2,:], cube[2,:,0], cube[5,0,:] = State.swap4(cube[0,::-1,2], cube[4,2,:], cube[2,::-1,0], cube[5,0,:], k)
+        return State(cube)
 
-    def F(self, k=1):
-        self.cube[0,:,:] = np.rot90(self.cube[0,:,:], -k)
-        self.cube[1,:,0], self.cube[5,:,0], self.cube[3,:,2], self.cube[4,:,0] = Cube.swap4(self.cube[1,:,0], self.cube[5,:,0], self.cube[3,:,2], self.cube[4,:,0], k)
+    def getF(cube, k=1):
+        cube[0,:,:] = np.rot90(cube[0,:,:], -k)
+        cube[1,:,0], cube[5,:,0], cube[3,:,2], cube[4,:,0] = State.swap4(cube[1,:,0], cube[5,:,0], cube[3,:,2], cube[4,:,0], k)
+        return State(cube)
 
-    def B(self, k=1):
-        self.cube[2,:,:] = np.rot90(self.cube[2,:,:], -k)
-        self.cube[1,:,2], self.cube[4,:,2], self.cube[3,:,0], self.cube[5,:,2] = Cube.swap4(self.cube[1,:,2], self.cube[4,::-1,2], self.cube[3,::-1,0], self.cube[5,:,2], k)
+    def getB(cube, k=1):
+        cube[2,:,:] = np.rot90(cube[2,:,:], -k)
+        cube[1,:,2], cube[4,:,2], cube[3,:,0], cube[5,:,2] = State.swap4(cube[1,:,2], cube[4,::-1,2], cube[3,::-1,0], cube[5,:,2], k)
+        return State(cube)
 
-    def __repr__(self):
+    def print(cube):
 
 #           36 37 38
 #           39 40 41
@@ -101,7 +132,7 @@ class Cube:
                 s += ' '
             return s
 
-        cube = self.cube.reshape(54)
+        cube = cube.reshape(54)
         s = ' '*10 + color([36, 37, 38])
         s += '\n' + ' '*10 + color([39, 40, 41])
         s += '\n' + ' '*10 + color([42, 43, 44])
@@ -113,8 +144,53 @@ class Cube:
         s += '\n' + ' '*10 + color([51, 52, 53])
         return s
 
-    def __str__(self):
-        return self.__repr__()
+class Cube:
+
+    def __init__(self):
+        self.cube = State(np.arange(54).reshape(6,3,3))
+        print('Starting...\n')
+        print(self.cube)
+
+    def mix(self, sequence):
+        print('\n...mixing...\n')
+        sequence.reverse()
+        while sequence:
+            m = sequence.pop()
+            if m[-1] == "2":
+                sequence.append(m[0])
+            k = 1 if m[-1] != "'" else -1
+            getattr(self, m[0])(k)
+        print(self.cube)
+
+    def randmix(self, n):
+        li = ['F','R','U', 'B', 'L', 'D']
+        sequence = []
+        while (len(sequence) < n):
+            m = choice(li)
+            m = m if getrandbits(1) else m + "'"
+            if sequence and sequence[-1] == m:
+                sequence[-1] = m[0] + '2'
+            else:
+                sequence.append(m)
+        self.mix(sequence)
+    
+    def U(self, k=1):
+        self.cube = State.getU(self.cube.cube.copy(), k)
+
+    def D(self, k=1):
+        self.cube = State.getD(self.cube.cube.copy(), k)
+
+    def L(self, k=1):
+        self.cube = State.getL(self.cube.cube.copy(), k)
+
+    def R(self, k=1):
+        self.cube = State.getR(self.cube.cube.copy(), k)
+
+    def F(self, k=1):
+        self.cube = State.getF(self.cube.cube.copy(), k)
+
+    def B(self, k=1):
+        self.cube = State.getB(self.cube.cube.copy(), k)
 
 class RubikSolver:
 
@@ -130,15 +206,37 @@ class RubikSolver:
                 raise Exception('Parsing Error')
         self.cube.mix(self.sequence[::-1]);
 
+from queue import PriorityQueue
+from collections import deque
+
+class BFS:
+    def __init__(self, goal):
+        self.goal = goal
+        self.states = 0
+        
+    def process(self, first):
+        queue = deque(first)
+        while self.queue:
+            item = queue.popleft()
+            self.states += 1
+            for child in item.children():
+                child.parent = item
+                if child.goal(goal):
+                    return child
+                queue.append(child)
+        return False
+
 def main(argv):
-    if len(argv) != 2:
+    if len(argv) > 2:
         raise Exception('Only one argument is needed.')
     r = RubikSolver()
-    #r.mix(argv[1])
+    if len(argv) == 2:
+        r.mix(argv[1])
+    elif len(argv) == 1:
+        r.cube.randmix(20)
 
 if __name__ == "__main__":
-    C = Cube()
-#    try:
-#	    main(sys.argv)
-#    except Exception as e:
-#        print('Error : ' + str(e))
+    try:
+        main(sys.argv)
+    except Exception as e:
+        print('Error : ' + str(e))
