@@ -13,6 +13,8 @@ Red     = lambda s : "\033[1;48;5;196m" + s + "\033[1;0m"
 Blue    = lambda s : "\033[1;48;5;4m" + s + "\033[1;0m"
 Yellow  = lambda s : "\033[1;30;48;5;226m" + s + "\033[1;0m"
 
+Superflip = ['R','L','U2','F',"U'",'D','F2','R2','B2','L','U2',"F'","B'",'U','R2','D','F2','U','R2','U']
+
 class Heuristic:
 
     def cross(cube):
@@ -32,10 +34,15 @@ class Heuristic:
         return errors(cube)
 
 class State:
-    def __init__(self, cube):
+    def __init__(self, cube, ante=False):
         self.cube = cube
         self.parent = None
-#        print(self)
+        self.ante = ante
+        self.key = State.getKey(self.cube)
+
+    def getKey(c):
+        li = c[0].reshape(9).tolist() + c[2].reshape(9).tolist() + [c[1][0][1]] + [c[1][2][1]] + [c[3][0][1]] + [c[3][2][1]]
+        return ','.join(map(str, li))
 
     def children(self, prev=False):
         moves = {'F','R','U', 'B', 'L', 'D'}
@@ -57,52 +64,55 @@ class State:
     def __eq__(self, o):
         return self.cube == o.cube
 
-    def __hash__(self):
-        return ",".join(map(str, self.cube.reshape(54).tolist()))
-
-#    def __repr__(self):
-#        return State.print(self.cube)
+    def __repr__(self):
+        return State._print(self.cube)
 
     def __str__(self):
-        return State.print(self.cube)
+        return State._print(self.cube)
 
-    def swap4(a, b, c, d, k):
+    def swapRL(a, b, c, d, k):
         if k == 1:
             return d.tolist(), a.tolist(), b.tolist(), c.tolist()
         else:
-            return b.tolist(), c.tolist(), d.tolist(), a.tolist()
+            return b[::-1].tolist(), c[::-1].tolist(), d[::-1].tolist(), a[::-1].tolist()
+
+    def swapFB(a, b, c, d, k):
+        if k == 1:
+            return d.tolist(), a.tolist(), b[::-1].tolist(), c[::-1].tolist()
+        else:
+            return b.tolist(), c[::-1].tolist(), d[::-1].tolist(), a.tolist()
 
     def getU(cube, k=1):
         cube[4,:,:] = np.rot90(cube[4,:,:], -k)
         cube[:4,0,:] = np.roll(cube[:4,0,:], -k, axis=0)
-        return State(cube)
+        return State(cube, "U" if k == 1 else "U'")
 
     def getD(cube, k=1):
         cube[5,:,:] = np.rot90(cube[5,:,:], -k)
         cube[:4,2,:] = np.roll(cube[:4,2,:], k, axis=0)
-        return State(cube)
+        return State(cube, "D" if k == 1 else "D'")
 
     def getL(cube, k=1):
         cube[3,:,:] = np.rot90(cube[3,:,:], -k)
-        cube[0,:,0], cube[5,2,:], cube[2,:,2], cube[4,0,:] = State.swap4(cube[0,:,0], cube[5,2,::-1], cube[2,:,2], cube[4,0,::-1], k)
-        return State(cube)
+        cube[0,:,0], cube[5,2,:], cube[2,:,2], cube[4,0,:] = State.swapRL(cube[0,:,0], cube[5,2,::-1], cube[2,:,2], cube[4,0,::-1], k)
+        return State(cube, "L" if k == 1 else "L'")
 
     def getR(cube, k=1):
         cube[1,:,:] = np.rot90(cube[1,:,:], -k)
-        cube[0,:,2], cube[4,2,:], cube[2,:,0], cube[5,0,:] = State.swap4(cube[0,::-1,2], cube[4,2,:], cube[2,::-1,0], cube[5,0,:], k)
-        return State(cube)
+        cube[0,:,2], cube[4,2,:], cube[2,:,0], cube[5,0,:] = State.swapRL(cube[0,::-1,2], cube[4,2,:], cube[2,::-1,0], cube[5,0,:], k)
+        return State(cube, "R" if k == 1 else "R'")
 
     def getF(cube, k=1):
         cube[0,:,:] = np.rot90(cube[0,:,:], -k)
-        cube[1,:,0], cube[5,:,0], cube[3,:,2], cube[4,:,0] = State.swap4(cube[1,:,0], cube[5,:,0], cube[3,:,2], cube[4,:,0], k)
-        return State(cube)
+        cube[1,:,0], cube[5,:,0], cube[3,:,2], cube[4,:,0] = State.swapFB(cube[1,:,0], cube[5,:,0], cube[3,:,2], cube[4,:,0], k)
+        return State(cube, "F" if k == 1 else "F'")
 
     def getB(cube, k=1):
         cube[2,:,:] = np.rot90(cube[2,:,:], -k)
-        cube[1,:,2], cube[4,:,2], cube[3,:,0], cube[5,:,2] = State.swap4(cube[1,:,2], cube[4,::-1,2], cube[3,::-1,0], cube[5,:,2], k)
-        return State(cube)
+        cube[1,:,2], cube[4,:,2], cube[3,:,0], cube[5,:,2] = State.swapFB(cube[1,:,2], cube[4,::-1,2][::-1], cube[3,::-1,0][::-1], cube[5,:,2], k)
+        return State(cube, "B" if k == 1 else "B'")
 
-    def print(cube):
+    def _print(cube):
 
 #           36 37 38
 #           39 40 41
@@ -148,11 +158,12 @@ class Cube:
 
     def __init__(self):
         self.cube = State(np.arange(54).reshape(6,3,3))
-        print('Starting...\n')
         print(self.cube)
 
+    def reinit(self):
+        self.cube = State(np.arange(54).reshape(6,3,3))
+
     def mix(self, sequence):
-        print('\n...mixing...\n')
         sequence.reverse()
         while sequence:
             m = sequence.pop()
@@ -173,7 +184,7 @@ class Cube:
             else:
                 sequence.append(m)
         self.mix(sequence)
-    
+
     def U(self, k=1):
         self.cube = State.getU(self.cube.cube.copy(), k)
 
@@ -192,22 +203,46 @@ class Cube:
     def B(self, k=1):
         self.cube = State.getB(self.cube.cube.copy(), k)
 
-class RubikSolver:
-
-    def __init__(self):
-        self.sequence = []
-        self.cube = Cube()
-
-    def mix(self, sequence):
-        for x in sequence.split():
-            if re.match(r'^[FRUBLD][2\']?$', x):
-                self.sequence.append(x)
-            else:
-                raise Exception('Parsing Error')
-        self.cube.mix(self.sequence[::-1]);
+    def __repr__(self):
+        return self.cube.__repr__()
 
 from queue import PriorityQueue
 from collections import deque
+
+class RubikSolver:
+
+    def __init__(self):
+        print('Starting...\n')
+        self.sequence = []
+        self.cube = Cube()
+
+    def mix(self, sequence = None):
+        print('\n...mixing...\n')
+        if sequence and type(sequence) == list:
+            for x in sequence.split():
+                if re.match(r'^[FRUBLD][2\']?$', x):
+                    self.sequence.append(x)
+                else:
+                    raise Exception('Parsing Error')
+            self.cube.mix(self.sequence[::-1]);
+        else:
+            self.cube.randmix(5)
+
+    def cross(self):
+        B = BFS([10,12,14,16])
+        out = B.process(self.cube.cube)
+        seq = deque([])
+        while out.parent:
+            seq.appendleft(out.ante)
+            out = out.parent
+        self.proceed(seq)
+        return seq
+
+    def proceed(self, seq):
+        self.cube.mix(seq)
+
+    def __repr__(self):
+        return self.cube.__repr__()
 
 class BFS:
     def __init__(self, goal):
@@ -215,15 +250,18 @@ class BFS:
         self.states = 0
         
     def process(self, first):
-        queue = deque(first)
-        while self.queue:
+        queue = deque([first])
+        seen = set()
+        while queue:
             item = queue.popleft()
+            seen.add(item.key)
             self.states += 1
             for child in item.children():
                 child.parent = item
-                if child.goal(goal):
+                if child.goal(self.goal):
                     return child
-                queue.append(child)
+                if child.key not in seen:
+                    queue.append(child)
         return False
 
 def main(argv):
