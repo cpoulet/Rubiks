@@ -37,16 +37,45 @@ class MoveTable:
     MOVES = ['U','R','F','D','L','B']
 
     def CreateCornersPos():
+        FACTS = [factorial(x) for x in reversed(range(1,8))]
+        C1 = ['URF','UFL','ULB','UBR','DFR','DLF','DBL','DRB']
+        C2 = {'URF':0,'UFL':1,'ULB':2,'UBR':3,'DFR':4,'DLF':5,'DBL':6,'DRB':7}
+        
+        def encode(li):
+            li = [C2[x] for x in li]
+            def higherLeft(sub, x):
+                return sum([1 if i > x else 0 for i in sub])
+            
+            def toNum(li):
+                n = 0
+                for f in FACTS:
+                    n += li.pop()*(f)
+                return n
+
+            return toNum([higherLeft(li[:i], li[i]) for i in reversed(range(1,8))][::-1])
+
+        def decode(n):
+
+            def toLi(n)
+                li = []
+                for f in FACTS:
+                    r = n // f
+                    n = n % f
+                    li.append(r)
+                return li[::-1]
+            
+            return toLi(n)
+
         data = {}
         c = Cube()
         for p in range(40320):
-            li = getC_O(p)
+            li = decode(p)
             moves = {}
             for m in MoveTable.MOVES:
                 for n in range(4):
                     c.move(m)
                     if n != 3:
-                        moves[m] = invC_O(c.corners_ori)
+                        moves[m] = encode(c.corners)
                     else:
                         data[p] = moves
             break
@@ -54,7 +83,7 @@ class MoveTable:
 
     def CreateCornersOri():
         
-        def invC_O(li):
+        def encode(li):
             n = 0
             i = 0
             li = li[:-1]
@@ -63,7 +92,7 @@ class MoveTable:
                 i += 1
             return n
 
-        def getC_O(n):
+        def decode(n):
             # (0..2186)
             li = []
             for _ in range(7):
@@ -74,14 +103,14 @@ class MoveTable:
         data = {}
         c = Cube()
         for p in range(2187):
-            c.corners_ori = getC_O(p)
+            c.corners_ori = decode(p)
             moves = {}
             for m in MoveTable.MOVES:
                 nb = {}
                 for n in range(4):
                     c.move(m)
                     if n != 3:
-                        nb[n] = invC_O(c.corners_ori)
+                        nb[n] = encode(c.corners_ori)
                     else:
                         moves[m] = nb
                         data[p] = moves
