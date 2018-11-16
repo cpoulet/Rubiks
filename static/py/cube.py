@@ -1,208 +1,349 @@
-from enum import Enum
-from utils import binomial
+from utils import binomial, rotLeft, rotRight, pick
 from math import factorial as fact
-from collections import defaultdict as ddict
-import json
 
-e_C = Enum('Corners', 'URF UFL ULB UBR DFR DLF DBL DRB')
-e_E = Enum('Edges', 'FR FU FL FD UR UL DL DR BR BU BL BD')
+class Unfolded:
 
-H = {'U','D','F2','R2','B2','L2'}
+    Wh = "\033[1;30;107m  \033[1;0m"
+    Gr = "\033[1;48;5;46m  \033[1;0m"
+    Or = "\033[1;48;5;208m  \033[1;0m"
+    Ye = "\033[1;30;48;5;226m  \033[1;0m"
+    Bl = "\033[1;48;5;4m  \033[1;0m"
+    Re = "\033[1;48;5;196m  \033[1;0m"
+    Colors = [Wh, Gr, Or, Ye, Bl, Re]
 
-CORNERS = {1:'URF',2:'UFL',3:'ULB',4:'UBR',5:'DFR',6:'DLF',7:'DBL',8:'DRB'}
-C_O = 0
+    def __init__(self, cp, co, ep, eo):
+        self.cp = cp
+        self.co = co
+        self.ep = ep
+        self.eo = eo
 
+    def display3D(self):
 
-def getCorners_Pos(li):
-    return [CORNERS[c] for c in li]
+        #       18 19 20
+        #     9 10 11 23
+        #  0  1  2 14 26
+        #  3  4  5 17
+        #  6  7  8
 
-EDGES = {1:'UR',2:'UF',3:'UL',4:'UB',5:'DR',6:'DF',7:'DL',8:'DB',9:'FR',10:'FL',11:'BL',12:'BR'}
-E_O = 0
+        return
 
-def getEdges_Ori(n):
-    # initial = 0
-    # 2.2^10 = 2048
-    # (0..2047)
-    ori = []
-    for _ in range(11):
-        n, r = divmod(n, 2)
-        ori.append(r)
-    return ori[::-1] + [sum(ori) % 2]
+    def __str__(self):
+        c = self.getAll()
+        s = ' '*9 + ''.join(c[0][:3]) + '\n'
+        s += ' '*9 + ''.join(c[0][3:6]) + '\n'
+        s += ' '*9 + ''.join(c[0][6:]) + '\n\n'
+        s += ' ' + ''.join(c[4][0:3]) + '  ' + ''.join(c[2][0:3]) + '  ' \
+                + ''.join(c[1][0:3]) + '  ' + ''.join(c[5][0:3]) + '\n'
+        s += ' ' + ''.join(c[4][3:6]) + '  ' + ''.join(c[2][3:6]) + '  ' \
+                + ''.join(c[1][3:6]) + '  ' + ''.join(c[5][3:6]) + '\n'
+        s += ' ' + ''.join(c[4][6:]) + '  ' + ''.join(c[2][6:]) + '  ' \
+                + ''.join(c[1][6:]) + '  ' + ''.join(c[5][6:]) + '\n\n'
+        s += ' '*9 + ''.join(c[3][:3]) + '\n'
+        s += ' '*9 + ''.join(c[3][3:6]) + '\n'
+        s += ' '*9 + ''.join(c[3][6:]) + '\n'
+        return s
 
-def getEdges_Pos(li):
-    return [EDGES[e] for e in li]
+    def getAll(self):
+        cube = []
+        for m in ['U', 'R', 'F', 'D', 'L', 'B']:
+            cube.append(self.get(m))
+        return [[Unfolded.Colors[x] for x in face] for face in cube]
 
-class MoveTable:
-    FOLDER = 'movetable/'
-    MOVES = ['U','R','F','D','L','B']
-
-    def CreateCornersPos():
-        FACTS = [factorial(x) for x in reversed(range(1,8))]
-        C1 = ['URF','UFL','ULB','UBR','DFR','DLF','DBL','DRB']
-        C2 = {'URF':0,'UFL':1,'ULB':2,'UBR':3,'DFR':4,'DLF':5,'DBL':6,'DRB':7}
+    def get(self, move):
+        # [ Wh, Gr, Or, Ye, Bl, Re]
+        # [ 0 , 1 , 2 , 3 , 4 , 5 ]
+        # [ U , R , F , D , L , B ]
         
-        def encode(li):
-            li = [C2[x] for x in li]
-            def higherLeft(sub, x):
-                return sum([1 if i > x else 0 for i in sub])
-            
-            def toNum(li):
-                n = 0
-                for f in FACTS:
-                    n += li.pop()*(f)
-                return n
+        # [URF,UFL,ULB,UBR,DFR,DLF,DBL,DRB]
+        C = [[2,3,1,0],[0,3,4,7],[1,0,5,4],[5,4,6,7],[2,1,6,5],[3,2,7,6]]
+        # [UR,UF,UL,UB,DR,DF,DL,DB,FR,FL,BL,BR]
+        E = [[3,2,0,1],[0,4,8,11],[1,5,8,9],[4,5,6,7],[2,6,9,10],[3,7,10,11]]
 
-            return toNum([higherLeft(li[:i], li[i]) for i in reversed(range(1,8))][::-1])
+        CColors = [[0,1,2],[0,2,4],[0,4,5],[0,5,1],[3,2,1],[3,4,2],[3,5,4],[3,1,5]]
+        EColors = [[0,1],[0,2],[0,4],[0,5],[3,1],[3,2],[3,4],[3,5],[2,1],[2,4],[5,4],[5,1]]
+        M = {'U':(0,0,0), 'R':(1,1,0), 'F':(2,1,1), 'D':(3,0,0), 'L':(4,1,0), 'B':(5,1,1)}
 
-        def decode(n):
-
-            def toLi(n)
-                li = []
-                for f in FACTS:
-                    r = n // f
-                    n = n % f
-                    li.append(r)
-                return li[::-1]
-            
-            return toLi(n)
-
-        data = {}
-        c = Cube()
-        for p in range(40320):
-            li = decode(p)
-            moves = {}
-            for m in MoveTable.MOVES:
-                for n in range(4):
-                    c.move(m)
-                    if n != 3:
-                        moves[m] = encode(c.corners)
-                    else:
-                        data[p] = moves
-            break
-        print(data)
-
-    def CreateCornersOri():
-        
-        def encode(li):
-            n = 0
-            i = 0
-            li = li[:-1]
-            while li:
-                n += li.pop()*(3**i)
-                i += 1
-            return n
-
-        def decode(n):
-            # (0..2186)
-            li = []
-            for _ in range(7):
-                n, r = divmod(n, 3)
-                li.append(r)
-            return li[::-1] + [(3 - sum(li)) % 3]
-        
-        data = {}
-        c = Cube()
-        for p in range(2187):
-            c.corners_ori = decode(p)
-            moves = {}
-            for m in MoveTable.MOVES:
-                nb = {}
-                for n in range(4):
-                    c.move(m)
-                    if n != 3:
-                        nb[n] = encode(c.corners_ori)
-                    else:
-                        moves[m] = nb
-                        data[p] = moves
-        MoveTable._saveData('corner_ori', data)
-
-    def _saveData(name, data):
-        with open(MoveTable.FOLDER + name, 'w') as fp:
-            json.dump(data, fp)
+        m, k, l = M[move]
+        cOrder = C[m]
+        eOrder = E[m]
+        u1 = [CColors[self.cp[cOrder[0]]][(self.co[cOrder[0]] + k) % 3]]
+        u1.append(EColors[self.ep[eOrder[0]]][(self.eo[eOrder[0]] + k) % 2])
+        u1.append(CColors[self.cp[cOrder[1]]][(self.co[cOrder[1]] - k) % 3])
+        u2 = [EColors[self.ep[eOrder[1]]][(self.eo[eOrder[1]] + k) % 2 ]]
+        u2.append(m)
+        u2.append(EColors[self.ep[eOrder[2]]][(self.eo[eOrder[2]] + k + l) % 2])
+        u3 = [CColors[self.cp[cOrder[2]]][(self.co[cOrder[2]] - k) % 3]]
+        u3.append(EColors[self.ep[eOrder[3]]][(self.eo[eOrder[3]] + k + l) % 2])
+        u3.append(CColors[self.cp[cOrder[3]]][(self.co[cOrder[3]] + k) % 3])
+        return [*u1, *u2, *u3]
 
 class Cube:
-    def __init__(self):
-        self.corners = ['URF','UFL','ULB','UBR','DFR','DLF','DBL','DRB']
-        self.corners_ori = [0] * 8
-        self.edges = ['UR','UF','UL','UB','DR','DF','DL','DB','FR','FL','BL','BR']
-        self.edges_ori = [0] * 12
+    def __init__(self, cp=None, co=None, ep=None, eo=None):
+        # cp : corner position
+        # [URF,UFL,ULB,UBR,DFR,DLF,DBL,DRB]
+        # [  0,  1,  2,  3,  4,  5,  6,  7]
+        self.cp = list(range(8)) if cp is None else cp
+        # co : corner orientation
+        self.co = [0] * 8 if co is None else co
+        # ep : edge position
+        # [UR,UF,UL,UB,DR,DF,DL,DB,FR,FL,BL,BR]
+        # [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11]
+        self.ep = list(range(12)) if ep is None else ep
+        # eo : edge orientation
+        self.eo = [0]*12 if eo is None else eo
+
+    def __eq__(self, o):
+        return (self.cp == o.cp and self.co == o.co and self.ep == o.ep and self.eo == o.eo)
+
+    def show(self):
+        return
+
+    def getCo(self):
+        # 3**7
+        # (0..2186)
+        n = 0
+        for x in self.co[:-1]:
+            n = n * 3 + x
+        return n
+
+    def setCo(self, n):
+        # 3**7
+        # (0..2186)
+        for i in range(6, -1, -1):
+            self.co[i] = n % 3
+            n //= 3
+        self.co[-1] = (3 - sum(self.co[:-1])) % 3
+
+    def getEo(self):
+        # 2**11
+        # (0..2047)
+        n = 0
+        for x in self.eo[:-1]:
+            n = n * 2 + x
+        return n
+
+    def setEo(self, n):
+        # 2**11
+        # (0..2047)
+        for i in range(10, -1, -1):
+            self.eo[i] = n % 2
+            n //= 2
+        self.eo[-1] = (2 - sum(self.eo[:-1])) % 2
+
+    def getCp(self):
+        # 8!
+        # (0..40319)
+        perm = self.cp[:]
+        n = 0
+        for i in range(7, 0, -1):
+            k = 0
+            while perm[i] != i:
+                rotLeft(perm, 0, i)
+                k += 1
+            n = (i + 1) * n + k
+        return n
+
+    def setCp(self, n):
+        # 8!
+        # (0..40319)
+        self.cp = list(range(8))
+        for i in range(8):
+            k = n % (i + 1)
+            n //= (i + 1)
+            while k:
+                rotRight(self.cp, 0, i)
+                k -= 1
+
+    def getSlice(self):
+        # UD-Slice : position of edges FR, FL, BL, BR without permutation : 4 parmi 12
+        n = 0
+        x = 1
+        for i in range(11, -1, -1):
+            if self.ep[i] in {8,9,10,11}:
+                n += binomial(11 - i, x)
+                x += 1
+        return n
+
+    def setSlice(self, n):
+        sliceE = [11,10,9,8]
+        otherE = [7,6,5,4,3,2,1,0]
+        for i in range(12):
+            if n - binomial(11 - i, len(sliceE)) >= 0:
+                n -= binomial(11 - i, len(sliceE))
+                self.ep[i] = sliceE.pop()
+            else:
+                self.ep[i] = otherE.pop()
+
+    def getSliceSorted(self):
+        # UD-Slice : position of edges FR, FL, BL, BR with permutation
+        # < 11880 in phase 1, < 24 in phase 2, 0 for solved cube
+        n = 0
+        x = 1
+        edge = []
+        # n < 495 (4 parmi 12)
+        for i in range(11, -1, -1):
+            if self.ep[i] in {8,9,10,11}:
+                n += binomial(11 - i, x)
+                edge.append(self.ep[i])
+                x += 1
+        # m < 24 (4!) permutations
+        edge = edge[::-1]
+        m = 0
+        for i in range(3, 0, -1):
+            k = 0
+            while edge[i] != i + 8:
+                rotLeft(edge, 0, i)
+                k += 1
+            m = (i + 1) * m + k
+        return 24*n + m
+
+    def setSliceSorted(self, n):
+        sliceE = [8,9,10,11]
+        otherE = [7,6,5,4,3,2,1,0]
+        m = n % 24
+        n = n // 24
+        for i in range(1, 4):
+            k = m % (i + 1)
+            m //= i + 1
+            while k > 0:
+                rotRight(sliceE, 0, i)
+                k -= 1
+        sliceE = sliceE[::-1]
+        for i in range(12):
+            if n - binomial(11 - i, len(sliceE)) >= 0:
+                n -= binomial(11 - i, len(sliceE))
+                self.ep[i] = sliceE.pop()
+            else:
+                self.ep[i] = otherE.pop()
+
+    def toUnfolded(self):
+        return Unfolded(self.cp, self.co, self.ep, self.eo)
+
+    def show(self):
+        print(self.toUnfolded())
 
     def move(self, m):
         getattr(self, m)()
 
     def _cpy(self):
-        return self.corners.copy(), self.corners_ori.copy()
+        return self.cp.copy(), self.co.copy(), self.ep.copy(), self.eo.copy()
 
     def U(self):
-        corners, corners_ori = self._cpy()
+        cp, co, ep, eo = self._cpy()
 
-        self.corners[0] = corners[3]
-        self.corners[1] = corners[0]
-        self.corners[2] = corners[1]
-        self.corners[3] = corners[2]
+        self.cp[0] = cp[3]
+        self.cp[1] = cp[0]
+        self.cp[2] = cp[1]
+        self.cp[3] = cp[2]
+
+        self.ep[0] = ep[3]
+        self.ep[1] = ep[0]
+        self.ep[2] = ep[1]
+        self.ep[3] = ep[2]
 
     def R(self):
-        corners, corners_ori = self._cpy()
+        cp, co, ep, eo = self._cpy()
 
-        self.corners[0] = corners[4]
-        self.corners[3] = corners[0]
-        self.corners[4] = corners[7]
-        self.corners[7] = corners[3]
+        self.cp[0] = corners[4]
+        self.cp[3] = corners[0]
+        self.cp[4] = corners[7]
+        self.cp[7] = corners[3]
 
-        self.corners_ori[0] = (corners_ori[4] + 2) % 3
-        self.corners_ori[3] = (corners_ori[0] + 1) % 3
-        self.corners_ori[4] = (corners_ori[7] + 1) % 3
-        self.corners_ori[7] = (corners_ori[3] + 2) % 3
+        self.co[0] = (co[4] + 2) % 3
+        self.co[3] = (co[0] + 1) % 3
+        self.co[4] = (co[7] + 1) % 3
+        self.co[7] = (co[3] + 2) % 3
+
+        self.ep[0] = ep[8]
+        self.ep[4] = ep[11]
+        self.ep[8] = ep[4]
+        self.ep[11] = ep[0]
+
+        self.eo[0] = eo[8]
+        self.eo[4] = eo[11]
+        self.eo[8] = eo[4]
+        self.eo[11] = eo[0]
 
     def F(self):
-        corners, corners_ori = self._cpy()
+        cp, co, ep, eo = self._cpy()
 
-        self.corners[0] = corners[1]
-        self.corners[1] = corners[5]
-        self.corners[4] = corners[0]
-        self.corners[5] = corners[4]
+        self.cp[0] = cp[1]
+        self.cp[1] = cp[5]
+        self.cp[4] = cp[0]
+        self.cp[5] = cp[4]
 
-        self.corners_ori[0] = (corners_ori[1] + 1) % 3
-        self.corners_ori[1] = (corners_ori[5] + 2) % 3
-        self.corners_ori[4] = (corners_ori[0] + 2) % 3
-        self.corners_ori[5] = (corners_ori[4] + 1) % 3
+        self.co[0] = (co[1] + 2) % 3
+        self.co[1] = (co[5] + 1) % 3
+        self.co[4] = (co[0] + 1) % 3
+        self.co[5] = (co[4] + 2) % 3
+
+        self.ep[1] = ep[9]
+        self.ep[5] = ep[8]
+        self.ep[8] = ep[1]
+        self.ep[9] = ep[5]
+
+        self.eo[1] = (eo[9] + 1) % 2
+        self.eo[5] = (eo[8] + 1) % 2
+        self.eo[8] = (eo[1] + 1) % 2
+        self.eo[9] = (eo[5] + 1) % 2
 
     def D(self):
-        corners, corners_ori = self._cpy()
+        cp, co, ep, eo = self._cpy()
 
-        self.corners[4] = corners[5]
-        self.corners[5] = corners[6]
-        self.corners[6] = corners[7]
-        self.corners[7] = corners[4]
+        self.cp[4] = cp[5]
+        self.cp[5] = cp[6]
+        self.cp[6] = cp[7]
+        self.cp[7] = cp[4]
+
+        self.ep[4] = ep[7]
+        self.ep[5] = ep[4]
+        self.ep[6] = ep[5]
+        self.ep[7] = ep[6]
 
     def L(self):
-        corners, corners_ori = self._cpy()
+        cp, co, ep, eo = self._cpy()
 
-        self.corners[1] = corners[2]
-        self.corners[2] = corners[6]
-        self.corners[5] = corners[1]
-        self.corners[6] = corners[5]
+        self.cp[1] = cp[2]
+        self.cp[2] = cp[6]
+        self.cp[5] = cp[1]
+        self.cp[6] = cp[5]
 
-        self.corners_ori[1] = (corners_ori[2] + 1) % 3
-        self.corners_ori[2] = (corners_ori[6] + 2) % 3
-        self.corners_ori[5] = (corners_ori[1] + 2) % 3
-        self.corners_ori[6] = (corners_ori[5] + 1) % 3
+        self.co[1] = (co[2] + 1) % 3
+        self.co[2] = (co[6] + 2) % 3
+        self.co[5] = (co[1] + 2) % 3
+        self.co[6] = (co[5] + 1) % 3
+
+        self.ep[2] = ep[10]
+        self.ep[6] = ep[9]
+        self.ep[9] = ep[2]
+        self.ep[10] = ep[6]
 
     def B(self):
-        corners, corners_ori = self._cpy()
+        cp, co, ep, eo = self._cpy()
 
-        self.corners[2] = corners[3]
-        self.corners[3] = corners[7]
-        self.corners[6] = corners[2]
-        self.corners[7] = corners[6]
+        self.cp[2] = cp[3]
+        self.cp[3] = cp[7]
+        self.cp[6] = cp[2]
+        self.cp[7] = cp[6]
 
-        self.corners_ori[2] = (corners_ori[3] + 1) % 3
-        self.corners_ori[3] = (corners_ori[7] + 2) % 3
-        self.corners_ori[6] = (corners_ori[2] + 2) % 3
-        self.corners_ori[7] = (corners_ori[6] + 1) % 3
+        self.co[2] = (co[3] + 1) % 3
+        self.co[3] = (co[7] + 2) % 3
+        self.co[6] = (co[2] + 2) % 3
+        self.co[7] = (co[6] + 1) % 3
+
+        self.ep[3] = ep[11]
+        self.ep[7] = ep[10]
+        self.ep[10] = ep[3]
+        self.ep[11] = ep[7]
+
+        self.eo[3] = (eo[11] + 1) % 2
+        self.eo[7] = (eo[10] + 1) % 2
+        self.eo[10] = (eo[3] + 1) % 2
+        self.eo[11] = (eo[7] + 1) % 2
 
 def main():
-    MoveTable.CreateCornersOri()
+    #MoveTable.CreateCornersOri()
+    print('hi')
 
 if __name__ == '__main__':
     main()

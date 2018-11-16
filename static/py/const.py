@@ -1,0 +1,4 @@
+N_MOVE = 18
+
+N_O_CORNERS = 3**7
+N_O_EDGED = 2**11

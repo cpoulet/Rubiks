@@ -164,6 +164,7 @@ class Cube:
         self.cube = State(np.arange(54).reshape(6,3,3))
 
     def mix(self, sequence):
+        out = sequence[::]
         sequence.reverse()
         while sequence:
             m = sequence.pop()
@@ -172,6 +173,7 @@ class Cube:
             k = 1 if m[-1] != "'" else -1
             getattr(self, m[0])(k)
         print(self.cube)
+        return out
 
     def randmix(self, n):
         li = ['F','R','U', 'B', 'L', 'D']
@@ -183,7 +185,7 @@ class Cube:
                 sequence[-1] = m[0] + '2'
             else:
                 sequence.append(m)
-        self.mix(sequence)
+        return self.mix(sequence)
 
     def U(self, k=1):
         self.cube = State.getU(self.cube.cube.copy(), k)
@@ -224,9 +226,9 @@ class RubikSolver:
                     self.sequence.append(x)
                 else:
                     raise Exception('Parsing Error')
-            self.cube.mix(self.sequence[::-1]);
+            return self.cube.mix(self.sequence[::-1]);
         else:
-            self.cube.randmix(5)
+            return self.cube.randmix(3)
 
     def cross(self):
         B = BFS([10,12,14,16])

@@ -1,4 +1,4 @@
-const STEP = 64;
+const STEP = 32;
 const VERBOSE = false;
 
 var pressed = false;
@@ -51,7 +51,6 @@ function main() {
     document.addEventListener('keydown', keyDownHandler, false);
     document.addEventListener('keyup', keyUpHandler, false);
 
-    stack = ['R', 'R', 'U', 'U'].reverse();
     let i = 0;
     let pending = false;
     scene.registerBeforeRender(function() {
@@ -360,4 +359,28 @@ function createScene(canvas, engine) {
     var light2 = new BABYLON.HemisphericLight("light3", new BABYLON.Vector3(0, -1, 0), scene);
 
     return scene;
+}
+
+function mix() {
+    var req = new XMLHttpRequest();
+
+    req.onreadystatechange = function(e) {
+        if (req.readyState == 4 && req.status == 200) {
+            sequence = JSON.parse(req.responseText);
+            if (VERBOSE) {
+                console.log(sequence);
+            }
+            for (let i=0; i < sequence.length; i++) {
+                stack.unshift(sequence[i]);
+            }
+        }
+    }
+    req.open('POST', '/mix', true);
+    req.send();
+
+/*    moves = ["U","U'","F","F'","R","R'","L","L'","D","D'","B","B'",]
+    for (let i=0; i < 20; i++) {
+        let move = moves[Math.floor(Math.random()*moves.length)];
+        stack.unshift(move);
+    }*/
 }

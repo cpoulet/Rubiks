@@ -4,4 +4,10 @@
     height: 480px;
     width: 640px;
     border: solid;
+    z-index: -1;
+}
+
+#btn {
+    background-color: white;
+    margin: 5px;
 }
