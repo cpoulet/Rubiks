@@ -1,15 +1,27 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from static.py.rubik import BFS, State, Cube, RubikSolver
 
 app = Flask(__name__)
 
 R = RubikSolver()
 
+@app.route('/')
+def index():
+    return render_template('rubiks.html', title="Rubik's Solver")
+
 @app.route('/mix', methods=['POST'])
 def user():
-    print('PYTHON')
+    s = R.mix()
    # print(request.form['moves'])
-    return jsonify('200')
+    print(s)
+    seq = []
+    for move in s:
+        if len(move) == 2 and move[1] == '2':
+            seq.append(move[0])
+            seq.append(move[0])
+        else:
+            seq.append(move)
+    return jsonify(seq)
 
 @app.route('/cross', methods=['POST'])
 def foo():
