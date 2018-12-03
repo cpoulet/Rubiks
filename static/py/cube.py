@@ -3,79 +3,53 @@ from math import factorial as fact
 
 class Unfolded:
 
-    Wh = "\033[1;30;107m  \033[1;0m"
-    Gr = "\033[1;48;5;46m  \033[1;0m"
-    Or = "\033[1;48;5;208m  \033[1;0m"
-    Ye = "\033[1;30;48;5;226m  \033[1;0m"
-    Bl = "\033[1;48;5;4m  \033[1;0m"
-    Re = "\033[1;48;5;196m  \033[1;0m"
-    Colors = [Wh, Gr, Or, Ye, Bl, Re]
+    W = "\033[1;30;107m  \033[1;0m"
+    G = "\033[1;48;5;46m  \033[1;0m"
+    O = "\033[1;48;5;208m  \033[1;0m"
+    Y = "\033[1;30;48;5;226m  \033[1;0m"
+    B = "\033[1;48;5;4m  \033[1;0m"
+    R = "\033[1;48;5;196m  \033[1;0m"
+    Colors = ['W', 'G', 'O', 'Y', 'B', 'R']
+    
+    # [URF,UFL,ULB,UBR,DFR,DLF,DBL,DRB]
+    Corners = [[8,9,20],[6,18,38],[0,36,47],[2,45,11],[29,26,15],[27,44,24],[33,53,42],[35,17,51]]
+    CColors = [[0,1,2],[0,2,4],[0,4,5],[0,5,1],[3,2,1],[3,4,2],[3,5,4],[3,1,5]]
+    
+    # [UR,UF,UL,UB,DR,DF,DL,DB,FR,FL,BL,BR]
+    Edges = [[5,10],[7,19],[3,37],[1,46],[32,16],[28,25],[30,43],[34,52],[23,12],[21,41],[50,39],[48,14]]
+    EColors = [[0,1],[0,2],[0,4],[0,5],[3,1],[3,2],[3,4],[3,5],[2,1],[2,4],[5,4],[5,1]]
 
     def __init__(self, cp, co, ep, eo):
-        self.cp = cp
-        self.co = co
-        self.ep = ep
-        self.eo = eo
+        self.c = [x // 9 for x in range(54)]
+        for i, c in enumerate(zip(cp, co)):
+            for k in range(3):
+                self.c[Unfolded.Corners[i][(c[1]+k) % 3]] = Unfolded.CColors[c[0]][k]
+        for i, e in enumerate(zip(ep, eo)):
+            for k in range(2):
+                self.c[Unfolded.Edges[i][(e[1]+k) % 2]] = Unfolded.EColors[e[0]][k]
 
-    def display3D(self):
-
-        #       18 19 20
-        #     9 10 11 23
-        #  0  1  2 14 26
-        #  3  4  5 17
-        #  6  7  8
-
-        return
-
-    def __str__(self):
-        c = self.getAll()
-        s = ' '*9 + ''.join(c[0][:3]) + '\n'
-        s += ' '*9 + ''.join(c[0][3:6]) + '\n'
-        s += ' '*9 + ''.join(c[0][6:]) + '\n\n'
-        s += ' ' + ''.join(c[4][0:3]) + '  ' + ''.join(c[2][0:3]) + '  ' \
-                + ''.join(c[1][0:3]) + '  ' + ''.join(c[5][0:3]) + '\n'
-        s += ' ' + ''.join(c[4][3:6]) + '  ' + ''.join(c[2][3:6]) + '  ' \
-                + ''.join(c[1][3:6]) + '  ' + ''.join(c[5][3:6]) + '\n'
-        s += ' ' + ''.join(c[4][6:]) + '  ' + ''.join(c[2][6:]) + '  ' \
-                + ''.join(c[1][6:]) + '  ' + ''.join(c[5][6:]) + '\n\n'
-        s += ' '*9 + ''.join(c[3][:3]) + '\n'
-        s += ' '*9 + ''.join(c[3][3:6]) + '\n'
-        s += ' '*9 + ''.join(c[3][6:]) + '\n'
+    def toStr(self):
+        s = ''
+        for x in self.c:
+            s += Unfolded.Colors[x]
         return s
 
-    def getAll(self):
-        cube = []
-        for m in ['U', 'R', 'F', 'D', 'L', 'B']:
-            cube.append(self.get(m))
-        return [[Unfolded.Colors[x] for x in face] for face in cube]
-
-    def get(self, move):
-        # [ Wh, Gr, Or, Ye, Bl, Re]
-        # [ 0 , 1 , 2 , 3 , 4 , 5 ]
-        # [ U , R , F , D , L , B ]
-        
-        # [URF,UFL,ULB,UBR,DFR,DLF,DBL,DRB]
-        C = [[2,3,1,0],[0,3,4,7],[1,0,5,4],[5,4,6,7],[2,1,6,5],[3,2,7,6]]
-        # [UR,UF,UL,UB,DR,DF,DL,DB,FR,FL,BL,BR]
-        E = [[3,2,0,1],[0,4,8,11],[1,5,8,9],[4,5,6,7],[2,6,9,10],[3,7,10,11]]
-
-        CColors = [[0,1,2],[0,2,4],[0,4,5],[0,5,1],[3,2,1],[3,4,2],[3,5,4],[3,1,5]]
-        EColors = [[0,1],[0,2],[0,4],[0,5],[3,1],[3,2],[3,4],[3,5],[2,1],[2,4],[5,4],[5,1]]
-        M = {'U':(0,0,0), 'R':(1,1,0), 'F':(2,1,1), 'D':(3,0,0), 'L':(4,1,0), 'B':(5,1,1)}
-
-        m, k, l = M[move]
-        cOrder = C[m]
-        eOrder = E[m]
-        u1 = [CColors[self.cp[cOrder[0]]][(self.co[cOrder[0]] + k) % 3]]
-        u1.append(EColors[self.ep[eOrder[0]]][(self.eo[eOrder[0]] + k) % 2])
-        u1.append(CColors[self.cp[cOrder[1]]][(self.co[cOrder[1]] - k) % 3])
-        u2 = [EColors[self.ep[eOrder[1]]][(self.eo[eOrder[1]] + k) % 2 ]]
-        u2.append(m)
-        u2.append(EColors[self.ep[eOrder[2]]][(self.eo[eOrder[2]] + k + l) % 2])
-        u3 = [CColors[self.cp[cOrder[2]]][(self.co[cOrder[2]] - k) % 3]]
-        u3.append(EColors[self.ep[eOrder[3]]][(self.eo[eOrder[3]] + k + l) % 2])
-        u3.append(CColors[self.cp[cOrder[3]]][(self.co[cOrder[3]] + k) % 3])
-        return [*u1, *u2, *u3]
+    def __str__(self):
+        s = self.toStr()
+        c = lambda x : getattr(self, x[0]) + getattr(self, x[1]) + getattr(self, x[2])
+        o  = ' '*9 + c(s[:3]) + '\n'
+        o += ' '*9 + c(s[3:6]) + '\n'
+        o += ' '*9 + c(s[6:9]) + '\n\n'
+        o += ' ' + c(s[36:39]) + '  ' + c(s[18:21]) + '  ' \
+                + c(s[9:12]) + '  ' + c(s[45:48]) + '\n'
+        o += ' ' + c(s[39:42]) + '  ' + c(s[21:24]) + '  ' \
+                + c(s[12:15]) + '  ' + c(s[48:51]) + '\n'
+        o += ' ' + c(s[42:45]) + '  ' + c(s[24:27]) + '  ' \
+                + c(s[15:18]) + '  ' + c(s[51:54]) + '\n\n'
+        o += ' '*9 + c(s[27:30]) + '\n'
+        o += ' '*9 + c(s[30:33]) + '\n'
+        o += ' '*9 + c(s[33:36]) + '\n'
+        return o
 
 class Cube:
     def __init__(self, cp=None, co=None, ep=None, eo=None):
@@ -95,8 +69,13 @@ class Cube:
     def __eq__(self, o):
         return (self.cp == o.cp and self.co == o.co and self.ep == o.ep and self.eo == o.eo)
 
+    def __str__(self):
+        return ''.join(['('+str(cp)+','+str(co)+')' for cp, co in zip(self.cp, self.co)]) + '\n' + ''.join(['('+str(ep)+','+str(eo)+')' for ep, eo in zip(self.ep, self.eo)])
+
     def show(self):
-        return
+        u = Unfolded(self.cp, self.co, self.ep, self.eo)
+        print(u)
+        return u
 
     def getCo(self):
         # 3**7
@@ -244,10 +223,10 @@ class Cube:
     def R(self):
         cp, co, ep, eo = self._cpy()
 
-        self.cp[0] = corners[4]
-        self.cp[3] = corners[0]
-        self.cp[4] = corners[7]
-        self.cp[7] = corners[3]
+        self.cp[0] = cp[4]
+        self.cp[3] = cp[0]
+        self.cp[4] = cp[7]
+        self.cp[7] = cp[3]
 
         self.co[0] = (co[4] + 2) % 3
         self.co[3] = (co[0] + 1) % 3
@@ -272,10 +251,10 @@ class Cube:
         self.cp[4] = cp[0]
         self.cp[5] = cp[4]
 
-        self.co[0] = (co[1] + 2) % 3
-        self.co[1] = (co[5] + 1) % 3
-        self.co[4] = (co[0] + 1) % 3
-        self.co[5] = (co[4] + 2) % 3
+        self.co[0] = (co[1] + 1) % 3
+        self.co[1] = (co[5] + 2) % 3
+        self.co[4] = (co[0] + 2) % 3
+        self.co[5] = (co[4] + 1) % 3
 
         self.ep[1] = ep[9]
         self.ep[5] = ep[8]
