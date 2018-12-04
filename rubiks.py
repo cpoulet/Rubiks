@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, render_template
-from static.py.rubik import BFS, State, Cube, RubikSolver
+from static.py.cube import Cube
+from static.py.unfolded import Unfolded
 
 app = Flask(__name__)
 
-R = RubikSolver()
+#R = RubikSolver()
+c = Cube()
 
 @app.route('/')
 def index():
@@ -11,8 +13,7 @@ def index():
 
 @app.route('/mix', methods=['POST'])
 def user():
-    s = R.mix()
-   # print(request.form['moves'])
+    s = c.randmix(10)
     print(s)
     seq = []
     for move in s:

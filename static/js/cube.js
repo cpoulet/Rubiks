@@ -1,5 +1,5 @@
 const STEP = 32;
-const VERBOSE = false;
+const VERBOSE = true;
 
 var pressed = false;
 var stack = [];

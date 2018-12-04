@@ -1,55 +1,6 @@
-from utils import binomial, rotLeft, rotRight, pick
-from math import factorial as fact
-
-class Unfolded:
-
-    W = "\033[1;30;107m  \033[1;0m"
-    G = "\033[1;48;5;46m  \033[1;0m"
-    O = "\033[1;48;5;208m  \033[1;0m"
-    Y = "\033[1;30;48;5;226m  \033[1;0m"
-    B = "\033[1;48;5;4m  \033[1;0m"
-    R = "\033[1;48;5;196m  \033[1;0m"
-    Colors = ['W', 'G', 'O', 'Y', 'B', 'R']
-    
-    # [URF,UFL,ULB,UBR,DFR,DLF,DBL,DRB]
-    Corners = [[8,9,20],[6,18,38],[0,36,47],[2,45,11],[29,26,15],[27,44,24],[33,53,42],[35,17,51]]
-    CColors = [[0,1,2],[0,2,4],[0,4,5],[0,5,1],[3,2,1],[3,4,2],[3,5,4],[3,1,5]]
-    
-    # [UR,UF,UL,UB,DR,DF,DL,DB,FR,FL,BL,BR]
-    Edges = [[5,10],[7,19],[3,37],[1,46],[32,16],[28,25],[30,43],[34,52],[23,12],[21,41],[50,39],[48,14]]
-    EColors = [[0,1],[0,2],[0,4],[0,5],[3,1],[3,2],[3,4],[3,5],[2,1],[2,4],[5,4],[5,1]]
-
-    def __init__(self, cp, co, ep, eo):
-        self.c = [x // 9 for x in range(54)]
-        for i, c in enumerate(zip(cp, co)):
-            for k in range(3):
-                self.c[Unfolded.Corners[i][(c[1]+k) % 3]] = Unfolded.CColors[c[0]][k]
-        for i, e in enumerate(zip(ep, eo)):
-            for k in range(2):
-                self.c[Unfolded.Edges[i][(e[1]+k) % 2]] = Unfolded.EColors[e[0]][k]
-
-    def toStr(self):
-        s = ''
-        for x in self.c:
-            s += Unfolded.Colors[x]
-        return s
-
-    def __str__(self):
-        s = self.toStr()
-        c = lambda x : getattr(self, x[0]) + getattr(self, x[1]) + getattr(self, x[2])
-        o  = ' '*9 + c(s[:3]) + '\n'
-        o += ' '*9 + c(s[3:6]) + '\n'
-        o += ' '*9 + c(s[6:9]) + '\n\n'
-        o += ' ' + c(s[36:39]) + '  ' + c(s[18:21]) + '  ' \
-                + c(s[9:12]) + '  ' + c(s[45:48]) + '\n'
-        o += ' ' + c(s[39:42]) + '  ' + c(s[21:24]) + '  ' \
-                + c(s[12:15]) + '  ' + c(s[48:51]) + '\n'
-        o += ' ' + c(s[42:45]) + '  ' + c(s[24:27]) + '  ' \
-                + c(s[15:18]) + '  ' + c(s[51:54]) + '\n\n'
-        o += ' '*9 + c(s[27:30]) + '\n'
-        o += ' '*9 + c(s[30:33]) + '\n'
-        o += ' '*9 + c(s[33:36]) + '\n'
-        return o
+from static.py.utils import binomial, rotLeft, rotRight
+from static.py.unfolded import Unfolded
+from random import choice, getrandbits
 
 class Cube:
     def __init__(self, cp=None, co=None, ep=None, eo=None):
@@ -71,6 +22,32 @@ class Cube:
 
     def __str__(self):
         return ''.join(['('+str(cp)+','+str(co)+')' for cp, co in zip(self.cp, self.co)]) + '\n' + ''.join(['('+str(ep)+','+str(eo)+')' for ep, eo in zip(self.ep, self.eo)])
+
+    def mix(self, sequence):
+        out = sequence[::]
+        sequence.reverse()
+        while sequence:
+            m = sequence.pop()
+            if m[-1] == "2":
+                sequence.append(m[0])
+            elif m[-1] == "'":
+                sequence.append(m[0])
+                sequence.append(m[0])
+            self.move(m[0])
+        self.show()
+        return out
+
+    def randmix(self, n):
+        li = ['F','R','U', 'B', 'L', 'D']
+        sequence = []
+        while (len(sequence) < n):
+            m = choice(li)
+            m = m if getrandbits(1) else m + "'"
+            if sequence and sequence[-1] == m:
+                sequence[-1] = m[0] + '2'
+            else:
+                sequence.append(m)
+        return self.mix(sequence)
 
     def show(self):
         u = Unfolded(self.cp, self.co, self.ep, self.eo)
@@ -215,10 +192,20 @@ class Cube:
         self.cp[2] = cp[1]
         self.cp[3] = cp[2]
 
+        self.co[0] = co[3]
+        self.co[1] = co[0]
+        self.co[2] = co[1]
+        self.co[3] = co[2]
+
         self.ep[0] = ep[3]
         self.ep[1] = ep[0]
         self.ep[2] = ep[1]
         self.ep[3] = ep[2]
+
+        self.eo[0] = eo[3]
+        self.eo[1] = eo[0]
+        self.eo[2] = eo[1]
+        self.eo[3] = eo[2]
 
     def R(self):
         cp, co, ep, eo = self._cpy()
@@ -274,10 +261,20 @@ class Cube:
         self.cp[6] = cp[7]
         self.cp[7] = cp[4]
 
-        self.ep[4] = ep[7]
-        self.ep[5] = ep[4]
-        self.ep[6] = ep[5]
-        self.ep[7] = ep[6]
+        self.co[4] = co[5]
+        self.co[5] = co[6]
+        self.co[6] = co[7]
+        self.co[7] = co[4]
+
+        self.ep[4] = ep[5]
+        self.ep[5] = ep[6]
+        self.ep[6] = ep[7]
+        self.ep[7] = ep[4]
+
+        self.eo[4] = eo[5]
+        self.eo[5] = eo[6]
+        self.eo[6] = eo[7]
+        self.eo[7] = eo[4]
 
     def L(self):
         cp, co, ep, eo = self._cpy()
@@ -296,6 +293,11 @@ class Cube:
         self.ep[6] = ep[9]
         self.ep[9] = ep[2]
         self.ep[10] = ep[6]
+
+        self.eo[2] = eo[10]
+        self.eo[6] = eo[9]
+        self.eo[9] = eo[2]
+        self.eo[10] = eo[6]
 
     def B(self):
         cp, co, ep, eo = self._cpy()
@@ -322,7 +324,8 @@ class Cube:
 
 def main():
     #MoveTable.CreateCornersOri()
-    print('hi')
+    c = Cube()
+    c.randmix(5)
 
 if __name__ == '__main__':
     main()
