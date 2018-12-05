@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify, render_template
 from static.py.cube import Cube
-from static.py.unfolded import Unfolded
 
 app = Flask(__name__)
 
-#R = RubikSolver()
 c = Cube()
 
 @app.route('/')
@@ -12,7 +10,7 @@ def index():
     return render_template('rubiks.html', title="Rubik's Solver")
 
 @app.route('/mix', methods=['POST'])
-def user():
+def mixing():
     s = c.randmix(10)
     print(s)
     seq = []

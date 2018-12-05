@@ -1,7 +1,9 @@
-#from static.py.utils import binomial, rotLeft, rotRight
-#from static.py.unfolded import Unfolded
-from utils import binomial, rotLeft, rotRight
-from unfolded import Unfolded
+try:
+    from static.py.unfolded import Unfolded
+    from static.py.utils import binomial, rotLeft, rotRight
+except ModuleNotFoundError:
+    from unfolded import Unfolded
+    from utils import binomial, rotLeft, rotRight
 from random import choice, getrandbits
 
 class Cube:
@@ -260,6 +262,28 @@ class Cube:
                 self.ep[i] = otherE.pop()
         for _ in range(4):
             rotLeft(self.ep, 0, 11)
+
+    def getUDEdges(self):
+        # UpDownEdges : position of edges UR,UF,UL,UB,DR,DF,DL and DB with permutation
+        # 8! = 40320
+        ep = self.ep[:8]
+        n = 0
+        for i in range(7,0,-1):
+            k = 0
+            while i != ep[i]:
+                rotLeft(ep, 0, i)
+                k += 1
+            n = (i + 1) * n + k
+        return n
+
+    def setUDEdges(self, n):
+        self.ep[:8] = range(8)
+        for i in range(8):
+            k = n % (i + 1)
+            n //= (i + 1)
+            while k:
+                rotRight(self.ep, 0, i)
+                k -= 1
 
     def toUnfolded(self):
         return Unfolded(self.cp, self.co, self.ep, self.eo)
