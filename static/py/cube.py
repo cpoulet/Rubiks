@@ -1,5 +1,7 @@
-from static.py.utils import binomial, rotLeft, rotRight
-from static.py.unfolded import Unfolded
+#from static.py.utils import binomial, rotLeft, rotRight
+#from static.py.unfolded import Unfolded
+from utils import binomial, rotLeft, rotRight
+from unfolded import Unfolded
 from random import choice, getrandbits
 
 class Cube:
@@ -132,16 +134,15 @@ class Cube:
 
     def getSliceSorted(self):
         # UD-Slice : position of edges FR, FL, BL, BR with permutation
+        # 12 * 11 * 10 * 9 = 11880
         # < 11880 in phase 1, < 24 in phase 2, 0 for solved cube
         n = 0
-        x = 1
         edge = []
         # n < 495 (4 parmi 12)
         for i in range(11, -1, -1):
             if self.ep[i] in {8,9,10,11}:
-                n += binomial(11 - i, x)
+                n += binomial(11 - i, len(edge) + 1)
                 edge.append(self.ep[i])
-                x += 1
         # m < 24 (4!) permutations
         edge = edge[::-1]
         m = 0
@@ -171,6 +172,94 @@ class Cube:
                 self.ep[i] = sliceE.pop()
             else:
                 self.ep[i] = otherE.pop()
+
+    def getUpEdges(self):
+        # UpEdges : position of edges UR, UF, UL, UB with permutation
+        # 12 * 11 * 10 * 9 = 11880
+        # < 11880 in phase 1, < 1656 + 24 in phase 2, 1656 for solved cube
+        n = 0
+        edge = []
+        ep = self.ep[8:] + self.ep[:8]
+        # n < 495 (4 parmi 12)
+        for i in range(11, -1, -1):
+            if ep[i] in {0,1,2,3}:
+                n += binomial(11 - i, len(edge) + 1)
+                edge.append(ep[i])
+        # m < 24 (4!) permutations
+        edge = edge[::-1]
+        m = 0
+        for i in range(3, 0, -1):
+            k = 0
+            while edge[i] != i:
+                rotLeft(edge, 0, i)
+                k += 1
+            m = (i + 1) * m + k
+        return 24*n + m
+
+    def setUpEdges(self, n):
+        sliceE = [0,1,2,3]
+        otherE = [11,10,9,8,7,6,5,4]
+        m = n % 24 # Permutation
+        n = n // 24 # Location
+        for i in range(1, 4):
+            k = m % (i + 1)
+            m //= i + 1
+            while k > 0:
+                rotRight(sliceE, 0, i)
+                k -= 1
+        sliceE = sliceE[::-1]
+        for i in range(12):
+            if n - binomial(11 - i, len(sliceE)) >= 0:
+                n -= binomial(11 - i, len(sliceE))
+                self.ep[i] = sliceE.pop()
+            else:
+                self.ep[i] = otherE.pop()
+        for _ in range(4):
+            rotLeft(self.ep, 0, 11)
+
+    def getDownEdges(self):
+        # DownEdges : position of edges DR, DF, DL, DB with permutation
+        # 12 * 11 * 10 * 9 = 11880
+        # < 11880 in phase 1, < 1656 + 24 in phase 2, 1656 for solved cube
+        n = 0
+        edge = []
+        ep = self.ep[8:] + self.ep[:8]
+        # n < 495 (4 parmi 12)
+        for i in range(11, -1, -1):
+            if ep[i] in {4,5,6,7}:
+                n += binomial(11 - i, len(edge) + 1)
+                edge.append(ep[i])
+        # m < 24 (4!) permutations
+        edge = edge[::-1]
+        m = 0
+        for i in range(3, 0, -1):
+            k = 0
+            while edge[i] != i + 4:
+                rotLeft(edge, 0, i)
+                k += 1
+            m = (i + 1) * m + k
+        return 24*n + m
+
+    def setDownEdges(self, n):
+        sliceE = [4,5,6,7]
+        otherE = [3,2,1,0,11,10,9,8]
+        m = n % 24 # Permutation
+        n = n // 24 # Location
+        for i in range(1, 4):
+            k = m % (i + 1)
+            m //= i + 1
+            while k > 0:
+                rotRight(sliceE, 0, i)
+                k -= 1
+        sliceE = sliceE[::-1]
+        for i in range(12):
+            if n - binomial(11 - i, len(sliceE)) >= 0:
+                n -= binomial(11 - i, len(sliceE))
+                self.ep[i] = sliceE.pop()
+            else:
+                self.ep[i] = otherE.pop()
+        for _ in range(4):
+            rotLeft(self.ep, 0, 11)
 
     def toUnfolded(self):
         return Unfolded(self.cp, self.co, self.ep, self.eo)
