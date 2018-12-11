@@ -22,6 +22,12 @@ def mixing():
             seq.append(move)
     return jsonify(seq)
 
+@app.route('/reset', methods=['POST'])
+def reset():
+    c = Cube()
+    c.show()
+    return jsonify(True)
+
 @app.route('/cross', methods=['POST'])
 def foo():
     print(request.form['toto'])
