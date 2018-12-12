@@ -4,13 +4,12 @@
     <meta charset="utf-8"/>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cube.css') }}">
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <!-- <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script> -->
     <title>Rubik's Cube</title>
 </head>
 <body>
     <canvas id ='cube'>Il semblerait que votre navigateur ne supporte pas le canevas HTML5</canvas>
-    <input id="btn" type="button" value="Mix" onclick="mix()">
-    <input id="btn" type="button" value="Reset" onclick="reset()">
-    <script src="{{ url_for('static', filename='js/cube.js') }}"></script>
+    <input class="btn" id="mix" type="button" value="Mix">
+    <input class="btn" id="reset" type="button" value="Reset">
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

@@ -8,6 +8,9 @@ from random import choice, getrandbits
 
 class Cube:
     def __init__(self, cp=None, co=None, ep=None, eo=None):
+        self.newCube(cp, co, ep, eo)
+        
+    def newCube(self, cp=None, co=None, ep=None, eo=None):
         # cp : corner position
         # [URF,UFL,ULB,UBR,DFR,DLF,DBL,DRB]
         # [  0,  1,  2,  3,  4,  5,  6,  7]
@@ -21,11 +24,15 @@ class Cube:
         # eo : edge orientation
         self.eo = [0]*12 if eo is None else eo
 
+    def reset(self):
+        self.newCube()
+
     def __eq__(self, o):
         return (self.cp == o.cp and self.co == o.co and self.ep == o.ep and self.eo == o.eo)
 
     def __str__(self):
         return ''.join(['('+str(cp)+','+str(co)+')' for cp, co in zip(self.cp, self.co)]) + '\n' + ''.join(['('+str(ep)+','+str(eo)+')' for ep, eo in zip(self.ep, self.eo)])
+
 
     def mix(self, sequence):
         out = sequence[::]

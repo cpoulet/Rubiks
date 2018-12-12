@@ -7,7 +7,7 @@
     z-index: -1;
 }
 
-#btn {
+.btn {
     background-color: white;
     margin: 5px;
 }

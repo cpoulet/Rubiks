@@ -24,8 +24,7 @@ def mixing():
 
 @app.route('/reset', methods=['POST'])
 def reset():
-    c = Cube()
-    c.show()
+    c.reset()
     return jsonify(True)
 
 @app.route('/cross', methods=['POST'])
