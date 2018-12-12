@@ -11,20 +11,31 @@ var Q;
 var Rubiks;
 var scene;
 
-// shift = 16
+var keys = {};
+
 function keyDownHandler(event) {
     if (pressed == true) {return;}
-    pressed = true;
     let i = event.keyCode;
-    console.log(event);
+    keys[i] = event.type == 'keydown';
     let moves = {70:'F',82:'R',85:'U',66:'B',76:'L',68:'D'};
+    let invmoves = {70:"F'",82:"R'",85:"U'",66:"B'",76:"L'",68:"D'"};
     if (i in moves) {
-        Q.push(moves[i], addMove);
+        pressed = true;
+        if (keys[16] === true) {
+            Q.push(invmoves[i], addMove);
+        } else {
+            Q.push(moves[i], addMove);
+        }
     }
 }
 
 function keyUpHandler(event) {
-    pressed = false;
+    let i = event.keyCode;
+    let moves = {70:'F',82:'R',85:'U',66:'B',76:'L',68:'D'};
+    keys[i] = event.type == 'keydown';
+    if (i in moves) {
+        pressed = false;
+    }
 }
 
 function createScene(canvas, engine) {

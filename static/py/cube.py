@@ -299,7 +299,10 @@ class Cube:
         print(self.toUnfolded())
 
     def move(self, m):
-        getattr(self, m)()
+        getattr(self, m[0])()
+        if len(m) > 1:
+            getattr(self, m[0])()
+            getattr(self, m[0])()
 
     def _cpy(self):
         return self.cp.copy(), self.co.copy(), self.ep.copy(), self.eo.copy()
