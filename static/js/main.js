@@ -1,4 +1,5 @@
 import { Cube } from  "./cube.js";
+import { Queue } from  "./queue.js";
 
 const STEP = 32;
 const VERBOSE = true;
@@ -6,6 +7,7 @@ const VERBOSE = true;
 var pressed = false;
 var stack = [];
 
+var Q;
 var Rubiks;
 var scene;
 
@@ -14,18 +16,10 @@ function keyDownHandler(event) {
     if (pressed == true) {return;}
     pressed = true;
     let i = event.keyCode;
-    if (i == 70) {
-        stack.unshift('F');
-    } else if (i == 82) {
-        stack.unshift('R');
-    } else if (i == 85) {
-        stack.unshift('U');
-    } else if (i == 66) {
-        stack.unshift('B');
-    } else if (i == 76) {
-        stack.unshift('L');
-    } else if (i == 68) {
-        stack.unshift('D');
+    console.log(event);
+    let moves = {70:'F',82:'R',85:'U',66:'B',76:'L',68:'D'};
+    if (i in moves) {
+        Q.push(moves[i], addMove);
     }
 }
 
@@ -45,6 +39,20 @@ function createScene(canvas, engine) {
     return scene;
 }
 
+function addMove(m) {
+    var req = new XMLHttpRequest();
+
+    req.onreadystatechange = function(e) {
+        if (req.readyState == 4 && req.status == 200) {
+            if (VERBOSE) {
+                console.log('addMove');
+            }
+        }
+    }
+    req.open('POST', '/move', true);
+    req.send(m);
+}
+
 function reset() {
     var req = new XMLHttpRequest();
 
@@ -54,6 +62,7 @@ function reset() {
                 console.log('Reset');
             }
             Rubiks.reset();
+            Q.reset();
         }
     }
     req.open('POST', '/reset', true);
@@ -70,7 +79,7 @@ function mix() {
                 console.log(sequence);
             }
             for (let i=0; i < sequence.length; i++) {
-                stack.unshift(sequence[i]);
+                Q.queue.unshift(sequence[i]);
             }
         }
     }
@@ -87,7 +96,8 @@ function main() {
     scene = createScene(canvas, engine);
 
     Rubiks = new Cube(scene, STEP);
-    
+    Q = new Queue;
+
     document.addEventListener('keydown', keyDownHandler, false);
     document.addEventListener('keyup', keyUpHandler, false);
 
@@ -95,8 +105,9 @@ function main() {
         if (Rubiks.moving) {
             Rubiks.move();
         } else {
-            let m = stack.pop();
-            Rubiks.nextMove(m);
+            if (Q.empty() === false) {
+                Rubiks.nextMove(Q.pop());
+            }
         }
     });
 

@@ -27,10 +27,12 @@ def reset():
     c.reset()
     return jsonify(True)
 
-@app.route('/cross', methods=['POST'])
-def foo():
-    print(request.form['toto'])
-    return jsonify('processed data :' + request.form['test'] + '/' + request.form['toto'])
+@app.route('/move', methods=['POST'])
+def move():
+    m = request.data.decode()
+    c.move(m)
+    c.show()
+    return jsonify(True)
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True)

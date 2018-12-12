@@ -54,7 +54,6 @@ export class Cube {
     }
 
     nextMove(move) {
-        this.moving = false;
         if (move) {
             this.setParents(move);
             if (this.VERBOSE) {
